@@ -1,0 +1,14 @@
+[sourceProfile]
+profileName=SMAS Cobol
+sourceDir=D:/gao/offline/cur/cur_src/SRC
+fileTypes=cbl
+encodingType=
+loadTime=2957
+
+[sourceProfile]
+profileName=SMAS SQL
+sourceDir=D:/gao/offline/cur/cur_src/PLSQ
+fileTypes=sql
+encodingType=
+loadTime=0
+

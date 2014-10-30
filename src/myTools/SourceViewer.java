@@ -25,7 +25,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.AbstractAction;
 import javax.swing.BoxLayout;
@@ -53,43 +55,43 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableRowSorter;
+
 import common.MyFocusListener;
-import common.ProgressDialog;
+import common.Utility;
 import common.WindowsShell;
 
 
 public class SourceViewer extends JPanel{
 	/**
-	 * 
+	 *
 	 */
-	
+
 	private static final long serialVersionUID = 582601465647537897L;
 	private static final int SEP_SIZE = 10;
 	private final String unsavedProfileName = "[unsaved]";
 	private final int    heightProfile = 30;
 	private final int    widthTextField = 300;
-	
+
 	private boolean   normalMode = true; // true: normal; false:profile edit
 	private JLabel	   labelProfile;
 	private JList      listProfileName;
 	private JTextField textNewProfileName;
 	private JTextField textSourceDir;
 	private JButton    buttonSourceChooser;
-	private JTextField textFileTypes;	
+	private JTextField textFileTypes;
 	private JButton    buttonAddProfile;
-	private ProgressDialog pd;
 	private Timer		timer;
-	
+
 	private JLabel				labelFilter;
 	private JTextField 			textFieldFilter;
 	private JTable 				tableFiles;
     private SourceListModel 	m_service_model;
     private TableRowSorter<SourceListModel> sorterFileTable;
-    
+
     private List<SourceProfile> listProfile;
     private SourceProfile		curProfile;
     private boolean 			flagDirty=false;
-    
+
     class SourceProfile {
     	String profileName="";
     	String sourceDir="";
@@ -97,7 +99,7 @@ public class SourceViewer extends JPanel{
     	String encodingType="";
     	long   loadTime=0;
     	List<String> listFiles=null;
-    	
+
     	SourceProfile(){
     		listFiles = new ArrayList<String>();
     	}
@@ -116,7 +118,7 @@ public class SourceViewer extends JPanel{
     }
     public SourceViewer() {
         super();
-        
+
         listProfile = new ArrayList<SourceProfile>();
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         addHierarchyListener(new HierarchyListener() {
@@ -131,13 +133,13 @@ public class SourceViewer extends JPanel{
                 }
             }
         });
-        
+
         JPanel profileMenu = new JPanel();
         profileMenu.setLayout(new BoxLayout(profileMenu, BoxLayout.Y_AXIS));
-        
+
 		loadSetting();
 		labelProfile = new JLabel("All Profile");
-		
+
 		listProfileName = new JList();
 		listProfileName.setMinimumSize(new Dimension(widthTextField,heightProfile));
 		listProfileName.setMaximumSize(new Dimension(widthTextField,heightProfile*5));
@@ -147,12 +149,17 @@ public class SourceViewer extends JPanel{
 		labelProfile.setDisplayedMnemonic(KeyEvent.VK_A);
 		labelProfile.setLabelFor(listProfileName);
 		listProfileName.addListSelectionListener(new ListSelectionListener() {
-			
+
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
 				DefaultListModel dlm = (DefaultListModel)listProfileName.getModel();
-				String curProfileName = (String)dlm.get(listProfileName.getSelectedIndex());
-				
+				int index = listProfileName.getSelectedIndex();
+				if(index==-1){
+					listProfileName.setSelectedIndex(0);
+					index = 0;
+				}
+				String curProfileName = (String)dlm.get(index);
+
 				System.out.println("old profile:"+curProfile.profileName+curProfile.listFiles.size());
 				for(int i=0;i<listProfile.size();i++){
 					if(listProfile.get(i).profileName.equals(curProfileName)){
@@ -161,16 +168,16 @@ public class SourceViewer extends JPanel{
 					}
 				}
 
-				updateProfileControl(curProfile,false);	
+				updateProfileControl(curProfile,false);
 				if(m_service_model!=null){
 					m_service_model.setExistList(curProfile.listFiles);
 				}
-				
+
 			}
 		});
-		
+
 		listProfileName.addKeyListener(new KeyListener() {
-			
+
 			// Profile Delete
 			public void keyTyped(KeyEvent e) {
 				if(e.getKeyChar()==KeyEvent.VK_DELETE){
@@ -209,22 +216,16 @@ public class SourceViewer extends JPanel{
 									System.out.println("work Thread ID: "+Thread.currentThread().getId());
 									m_service_model.initFileList();
 									timer.stop();
-									pd.setVisible(false);
 								}
 							 });
 							thr.start();
-							
-					    	pd = new ProgressDialog();
-					    	pd.setMax((int)curProfile.loadTime);
+
 					    	timer = new Timer(100, new ActionListener() {
 								@Override
 								public void actionPerformed(ActionEvent e) {
-									pd.setProgress(pd.getProgress()+100);
 								}
 							});
 					    	timer.start();
-					    	pd.setModal(true);
-					    	pd.setVisible(true);
 						}
 						textFieldFilter.setText(null);
 						curProfile.listFiles.clear();
@@ -232,11 +233,11 @@ public class SourceViewer extends JPanel{
 					}
 				}
 			}
-			
+
 			@Override
 			public void keyReleased(KeyEvent e) {
 			}
-			
+
 			@Override
 			public void keyPressed(KeyEvent e) {
 			}
@@ -247,28 +248,28 @@ public class SourceViewer extends JPanel{
 		textNewProfileName.setAlignmentX(LEFT_ALIGNMENT);
 		textNewProfileName.setVisible(false);
 		textNewProfileName.addKeyListener(new KeyListener() {
-			
+
 			@Override
 			public void keyTyped(KeyEvent e) {
 				if(e.getKeyChar()==KeyEvent.VK_ESCAPE){
 					switchMode();
 				}
 			}
-			
+
 			@Override
 			public void keyReleased(KeyEvent e) {}
-			
+
 			@Override
 			public void keyPressed(KeyEvent e) {}
 		});
-		
+
 		buttonAddProfile = new JButton("Add");
 		buttonAddProfile.setMinimumSize(new Dimension(widthTextField,heightProfile));
 		buttonAddProfile.setMaximumSize(new Dimension(widthTextField,heightProfile));
 		buttonAddProfile.setAlignmentX(LEFT_ALIGNMENT);
 		buttonAddProfile.setAlignmentY(TOP_ALIGNMENT);
 		buttonAddProfile.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				System.out.println("buttonAddProfile clicked.");
@@ -292,7 +293,7 @@ public class SourceViewer extends JPanel{
 		buttonSourceChooser.setPreferredSize(new Dimension(widthTextField/2,heightProfile));
 		buttonSourceChooser.setMinimumSize(new Dimension(widthTextField/2,heightProfile));
 		buttonSourceChooser.setEnabled(false);
-		buttonSourceChooser.addActionListener(new ActionListener() {			
+		buttonSourceChooser.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fc = new JFileChooser();
@@ -300,7 +301,7 @@ public class SourceViewer extends JPanel{
 				String defaultDir = (String)textSourceDir.getText();
 				fc.setCurrentDirectory(new File(defaultDir));
 				int ret = fc.showOpenDialog((Component)e.getSource());
-				
+
 				if ( ret == JFileChooser.APPROVE_OPTION ) {
 					String selectedDir = fc.getSelectedFile().getPath();
 					selectedDir = selectedDir.replace('\\', '/');
@@ -319,7 +320,7 @@ public class SourceViewer extends JPanel{
 		textFileTypes.setToolTipText("File Types (separate with ; )");
 
 		updateProfileControl(curProfile,true);
-		
+
 		profileMenu.add(labelProfile);
 		profileMenu.add(listProfileName);
 		profileMenu.add(textNewProfileName);
@@ -337,7 +338,7 @@ public class SourceViewer extends JPanel{
 		profileMenu.add(textFileTypes);
 		profileMenu.setAlignmentX(LEFT_ALIGNMENT);
 		profileMenu.setAlignmentY(TOP_ALIGNMENT);
-        
+
         textFieldFilter = new JTextField();
         labelFilter = new JLabel();
         labelFilter.setLabelFor(textFieldFilter);
@@ -358,7 +359,7 @@ public class SourceViewer extends JPanel{
                     }
                 });
         textFieldFilter.addKeyListener(new KeyListener() {
-			
+
 			@Override
 			public void keyTyped(KeyEvent e) {
 				if(e.getKeyChar()==KeyEvent.VK_ENTER){
@@ -366,13 +367,13 @@ public class SourceViewer extends JPanel{
 					Cursor orgCurosr = textFieldFilter.getCursor();
 					textFieldFilter.setCursor(new Cursor(Cursor.WAIT_CURSOR));
 					textFieldFilter.setCursor(orgCurosr);
-				} 
+				}
 			}
-			
+
 			@Override
 			public void keyReleased(KeyEvent e) {
 			}
-			
+
 			@Override
 			public void keyPressed(KeyEvent e) {
 				System.out.println((int)e.getKeyCode());
@@ -382,7 +383,7 @@ public class SourceViewer extends JPanel{
 			}
 		});
         textFieldFilter.setAlignmentX(LEFT_ALIGNMENT);
-        
+
         //Create a table with a sorter.
         m_service_model = new SourceListModel();
 //        m_service_model.initFileList();
@@ -406,28 +407,28 @@ public class SourceViewer extends JPanel{
 		});
 
         tableFiles.addMouseListener( new MouseListener() {
-			
+
 			@Override
 			public void mouseReleased(MouseEvent e) {
 			}
-			
+
 			@Override
 			public void mousePressed(MouseEvent e) {
 			}
-			
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 			}
-			
+
 			@Override
 			public void mouseEntered(MouseEvent e) {
 			}
-			
+
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount()==2) {
 					openSelectedItem();
-				}					
+				}
 			}
 
 		});
@@ -494,16 +495,16 @@ public class SourceViewer extends JPanel{
 		if(!normalMode){ // switch to add-profile mode
 			textNewProfileName.setText(unsavedProfileName);
 			textNewProfileName.requestFocus();
-		} 
+		}
     }
-    
+
     private void addProfile(){
     	SourceProfile sp = new SourceProfile();
 		sp.profileName = textNewProfileName.getText();
 		if(sp.profileName.equals(unsavedProfileName)){
 			return;
 		}
-		sp.sourceDir = textSourceDir.getText(); 
+		sp.sourceDir = textSourceDir.getText();
 		sp.fileTypes = textFileTypes.getText();
 		listProfile.add(sp);
 		flagDirty = true;
@@ -518,7 +519,7 @@ public class SourceViewer extends JPanel{
 							sp.fileTypes+","+
 							sp.encodingType);
     }
-    
+
     private void newTableFilter() {
     	System.out.println("newTableFilter called");
         RowFilter<SourceListModel, Object> rf = null;
@@ -526,34 +527,39 @@ public class SourceViewer extends JPanel{
         //If current expression doesn't parse, don't update.
         try {
         	String filter_text = textFieldFilter.getText();
-        	rf = RowFilter.regexFilter(filter_text, 0); 
+        	rf = RowFilter.regexFilter(filter_text, 0,3);
         } catch (java.util.regex.PatternSyntaxException e) {
             return;
         }
         sorterFileTable.setRowFilter(rf);
     }
-    
+
     class SourceListModel extends AbstractTableModel {
 
         /**
-		 * 
+		 *
 		 */
     	public final int COL_FILE_NAME = 0;
     	public final int COL_PATH=1;
     	public final int COL_TS=2;
-    	
+    	public final int COL_DESC=3;
+
 		private static final long serialVersionUID = 6968203745972823854L;
 		private String[] columnNames = {"file",
 										"path",
-                                        "last modified"
+                                        "last modified",
+                                        "desc"
                                         };
         private List<String>	listAllFiles;
         private List<String>	listFiles;
-         
+        private Map<String, String> fileDescs;
+
         public SourceListModel(){
         	listAllFiles = new ArrayList<String>();
         	listFiles = new ArrayList<String>();
+        	fileDescs = new HashMap<String, String>();
         }
+
         public List<String> getEntireFileList(){
         	return listAllFiles;
         }
@@ -567,11 +573,11 @@ public class SourceViewer extends JPanel{
         	listAllFiles.clear();
         	listFiles.clear();
 
-        	
+
         	listAllFiles.addAll(newList);
         	listFiles.addAll(listAllFiles);
         	fireTableDataChanged();
-        	
+
         	textFieldFilter.setText(null);
         	tableFiles.clearSelection();
         	tableFiles.getRowSorter().setSortKeys(null);
@@ -585,8 +591,17 @@ public class SourceViewer extends JPanel{
     		listFiles.addAll(listAllFiles);
     		if (listFiles.size()>0)
     			fireTableDataChanged();
+    		loadFileDescs();
         }
-        
+
+        private void loadFileDescs(){
+        	fileDescs = Utility.loadAllProperties("fileDescs");
+        }
+
+        public void saveFileDescs(){
+			Utility.saveProperty("fileDescs", fileDescs);
+        }
+
         private void pickSourceFile(File f) {
         	if(f.isDirectory()){
         		File[] list = f.listFiles();
@@ -599,7 +614,7 @@ public class SourceViewer extends JPanel{
         				if(curProfile.fileTypes.equals("*")||curProfile.fileTypes.isEmpty()) {
         					isType = true;
         				} else {
-        					String[] settingFileTypesList = curProfile.fileTypes.split(";");    						
+        					String[] settingFileTypesList = curProfile.fileTypes.split(";");
 	        				for(int j=0;j<settingFileTypesList.length;j++) {
 	        					if( fileName.endsWith("."+settingFileTypesList[j]) ){
 	        						isType = true;
@@ -643,7 +658,8 @@ public class SourceViewer extends JPanel{
 
         	String fileName = infos[0].substring(infos[0].lastIndexOf('/')+1);
         	String path = infos[0].substring(0,infos[0].lastIndexOf('/'));
-        	
+        	String desc = fileDescs.get(infos[0]);
+
         	switch (col) {
         	case COL_FILE_NAME:
         		return fileName;
@@ -651,29 +667,30 @@ public class SourceViewer extends JPanel{
             	return infos[1];
         	case COL_PATH:
             	return path;
+        	case COL_DESC:
+        		return desc==null?"":desc;
         	default:
         		System.out.println("null from getValueAt");
         		return "";
         	}
         }
         public boolean isCellEditable(int row, int col) {
-            //Note that the data/cell address is constant,
-            //no matter where the cell appears onscreen.
-            return false;
+            return col==COL_DESC;
         }
 
          public void setValueAt(Object value, int row, int col) {
-
-//            data[row][col] = value; 
-//            fireTableCellUpdated(row, col);
-
+        	 if(col==COL_DESC){
+        		 String[] infos = listFiles.get(row).split("!");
+        		 String fullPathName = infos[0];
+        		 fileDescs.put(fullPathName, (String)value);
+        	 }
         }
     }
- 
+
 	private void loadSetting() {
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader("sourceViewerSetting"));
-			String line=null;			
+			String line=null;
 			SourceProfile temp = null;
 			while((line=reader.readLine())!=null){
 				if(line.contains("[sourceProfile]")){
@@ -691,7 +708,7 @@ public class SourceViewer extends JPanel{
 				} else if(settingLine.length>1&&settingLine[0].equals("sourceDir")) {
 					temp.sourceDir=settingLine[1];
 				} else if (settingLine.length>1&&settingLine[0].equals("fileTypes")) {
-					temp.fileTypes=settingLine[1];					
+					temp.fileTypes=settingLine[1];
 				} else if (settingLine.length>1&&settingLine[0].equals("encodingType")) {
 					temp.encodingType=settingLine[1];
 				} else if (settingLine.length>1&&settingLine[0].equals("loadTime")) {
@@ -703,7 +720,7 @@ public class SourceViewer extends JPanel{
 			System.err.println("setting file not found!");
 		} catch (IOException e) {
 			e.printStackTrace();
-		} 
+		}
 		if ( listProfile.size() == 0  ){
 			SourceProfile defaultSourceProfile = new SourceProfile();
 			defaultSourceProfile.profileName = "default";
@@ -712,13 +729,15 @@ public class SourceViewer extends JPanel{
 			defaultSourceProfile.loadTime=0;
 			listProfile.add(defaultSourceProfile);
 			curProfile = defaultSourceProfile;
-			
+
 		} else {
-			curProfile = listProfile.get(0);			
+			curProfile = listProfile.get(0);
 		}
-	}  
+	}
 	private void saveSetting() {
 		try {
+			m_service_model.saveFileDescs();
+
 			if(!flagDirty)
 				return;
 			BufferedWriter writer = new BufferedWriter((new FileWriter("sourceViewerSetting")));
@@ -732,12 +751,13 @@ public class SourceViewer extends JPanel{
 			}
 			writer.close();
 
+
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} 
-		
+		}
+
 	}
 
     protected boolean setupListenersWhenConnected() {
@@ -746,34 +766,34 @@ public class SourceViewer extends JPanel{
             return false;
         }
         parentFrame.addWindowListener(new WindowListener() {
-			
+
 			@Override
 			public void windowOpened(WindowEvent e) {
 			}
-			
+
 			@Override
 			public void windowIconified(WindowEvent e) {
 			}
-			
+
 			@Override
 			public void windowDeiconified(WindowEvent e) {
 			}
-			
+
 			@Override
 			public void windowDeactivated(WindowEvent e) {
 			}
-			
+
 			@Override
 			public void windowClosing(WindowEvent e) {
 				System.out.println("setting saved");
-				
+
 				saveSetting();
 			}
-			
+
 			@Override
 			public void windowClosed(WindowEvent e) {
 			}
-			
+
 			@Override
 			public void windowActivated(WindowEvent e) {
 			}
@@ -784,17 +804,17 @@ public class SourceViewer extends JPanel{
         //Create and set up the window.
         JFrame frame = new JFrame("SourceViwer");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
+
         //Add content to the window.
         frame.add(new SourceViewer(), BorderLayout.CENTER);
-        
+
         //Display the window.
         frame.pack();
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         frame.setVisible(true);
     }
-    
+
     public static void main(String[] args) {
         //Schedule a job for the event dispatch thread:
         //creating and showing this application's GUI.

@@ -5,17 +5,17 @@ import java.util.List;
 
 public class EntityInfo {
 	public String m_id="";
-	public String m_logical="";
-	public String m_physical="";
+	public String entityDesc="";
+	public String entityName="";
 	public boolean favorite=false;
-	List<EntityFieldInfo> listFieldInfo;
+	List<FieldInfo> listFieldInfo;
 	public EntityInfo(){
-		listFieldInfo = new ArrayList<EntityFieldInfo>();
+		listFieldInfo = new ArrayList<FieldInfo>();
 	}
-	public void addField(EntityFieldInfo f){
+	public void addField(FieldInfo f){
 		listFieldInfo.add(f);
 	}
-	public List<EntityFieldInfo> getFields() {
+	public List<FieldInfo> getFields() {
 		return listFieldInfo;
 	}
 }

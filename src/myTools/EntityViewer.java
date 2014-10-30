@@ -1,18 +1,5 @@
 package myTools;
 
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableRowSorter;
-
-import common.EntityFieldInfo;
-import common.EntityInfo;
-import common.EntityXMLCreator;
-import common.EntityXMLReader;
-import common.MyFocusListener;
-import common.HelpDialog;
-import common.ProgressDialog;
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Toolkit;
@@ -38,31 +25,60 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.AbstractAction;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListSelectionModel;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.RowFilter;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableRowSorter;
 
-
+import common.EntityInfo;
+import common.EntityReader;
+import common.EntityTxtReader;
+import common.EntityTxtWriter;
+import common.EntityWriter;
+import common.EntityXmlReader;
+import common.EntityXmlWriter;
+import common.FieldInfo;
+import common.HelpDialog;
+import common.MyFocusListener;
 
 @SuppressWarnings("serial")
 public class EntityViewer extends JPanel {
     /**
-	 * 
+	 *
 	 */
-	private final String SETTING_FILENAME = "entity.xml";
+	private final String SETTING_FILENAME = "entity.txt";
+//	private final String SETTING_FILENAME = "entity.xml";
 	private String ENTITY_DEFINITION_DIR = "";
-	
+
     private boolean m_filtered_by_field = false;
     private String  fieldName2Filter = "";
     private boolean flagDataAvailable = false;
     private Map<String,List<String>> m_applt_map;
-    
+
     private HelpDialog helpText;
-    private ProgressDialog progressDialog;
     private JPanel panelLeft;
     private JTable tableEntity;
     private JScrollPane scrollPaneTable;
     private MyTableModel modelEntity;
     private JLabel	labelEntityFilter;
     private JTextField textEntityFilter;
-    
+
     private JTable tableField;
     private MyFieldModel modelField;
     private JLabel	labelFieldFilter;
@@ -86,11 +102,11 @@ public class EntityViewer extends JPanel {
                     removeHierarchyListener(this);
                 }
             }
-        });  
-        
+        });
+
         m_cur_table = null;
         modelEntity = new MyTableModel();
-              
+
         panelLeft = new JPanel();
 
         panelLeft.setLayout(new BoxLayout(panelLeft,BoxLayout.Y_AXIS));
@@ -120,7 +136,7 @@ public class EntityViewer extends JPanel {
         textEntityFilter.getInputMap().put(KeyStroke.getKeyStroke(
                 KeyEvent.VK_ENTER, 0),
                 "search field");
-        textEntityFilter.getActionMap().put("search field", new AbstractAction() 
+        textEntityFilter.getActionMap().put("search field", new AbstractAction()
 										{
 											public void actionPerformed(ActionEvent e) {
 												String text = textEntityFilter.getText();
@@ -131,21 +147,16 @@ public class EntityViewer extends JPanel {
 														ENTITY_DEFINITION_DIR = text.substring(
 																					text.indexOf('<')+1,
 																					text.indexOf('>'));
-														progressDialog = new ProgressDialog();
-														progressDialog.setLocation(100, 100);
 														Thread thr = new Thread(new Runnable() {
 															public void run() {
 																System.out.println("work Thread ID: "+Thread.currentThread().getId());
 																//TODO
-																EntityXMLCreator.createEntityXML(ENTITY_DEFINITION_DIR, SETTING_FILENAME, progressDialog);
-																modelEntity.readInData();
-																textEntityFilter.setText("");
-																textEntityFilter.setEditable(true);
+//																modelEntity.readInData();
+//																textEntityFilter.setText("");
+//																textEntityFilter.setEditable(true);
 															}
 														 });
 														thr.start();
-														progressDialog.setModal(true);
-														progressDialog.setVisible(true);
 														System.out.println("UI Thread ID: "+Thread.currentThread().getId());
 													}
 												} else if ( text.isEmpty() ) {
@@ -156,10 +167,10 @@ public class EntityViewer extends JPanel {
 
 											}
 										}
-									); 
+									);
 
         textEntityFilter.addKeyListener(new MyKeyListener());
-        
+
         textEntityFilter.setToolTipText("[Default]by table name; [Enter]by field name.");
 //        textEntityFilter.setVisible(false);
 
@@ -176,7 +187,7 @@ public class EntityViewer extends JPanel {
         //For the purposes of this example, better to have a single
         //selection.
 //        tableEntity.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
+
         //When selection changes, provide user with row numbers for
         //both view and model.
 
@@ -186,14 +197,14 @@ public class EntityViewer extends JPanel {
         tableEntity.getInputMap().put(KeyStroke.getKeyStroke(
                 KeyEvent.VK_TAB, 0),
                 "goto field filter");
-        tableEntity.getActionMap().put("goto field filter", new AbstractAction() 
+        tableEntity.getActionMap().put("goto field filter", new AbstractAction()
 										{
 											public void actionPerformed(ActionEvent e) {
 												textFieldFilter.requestFocus();
 											}
 										}
-									); 
-		
+									);
+
         scrollPaneTable = new JScrollPane(tableEntity);
         scrollPaneTable.setAlignmentX(LEFT_ALIGNMENT);
 //        scrollPaneTable.setVisible(false);
@@ -202,11 +213,11 @@ public class EntityViewer extends JPanel {
         panelLeft.add(textEntityFilter);
         panelLeft.add(scrollPaneTable);
         panelLeft.setAlignmentY(TOP_ALIGNMENT);
-        
-        
+
+
         modelField = new MyFieldModel();
         sorterField = new TableRowSorter<MyFieldModel>(modelField);
-        tableField = new JTable(modelField); 
+        tableField = new JTable(modelField);
         tableField.setRowSorter(sorterField);
 //        tableField.setPreferredSize(new Dimension(500,1000));
         tableField.setPreferredScrollableViewportSize(new Dimension(500, 400));
@@ -218,59 +229,59 @@ public class EntityViewer extends JPanel {
         tableField.getColumnModel().getColumn(5).setMaxWidth(80);
         tableField.setFillsViewportHeight(true);
         tableField.addMouseListener(new MouseListener() {
-			
+
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				
+
 			}
-			
+
 			@Override
 			public void mousePressed(MouseEvent e) {
-				
+
 			}
-			
+
 			@Override
 			public void mouseExited(MouseEvent e) {
-				
+
 			}
-			
+
 			@Override
 			public void mouseEntered(MouseEvent e) {
-				
+
 			}
-			
+
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount()==2 ) {
 					System.out.println("mouseClicked 2");
 					if ( modelField.tableFields!= null) {
-						EntityFieldInfo curField = null;
+						FieldInfo curField = null;
 				        int viewRow = tableField.getSelectedRow();
 				        if (viewRow != -1) {
 				            int modelRow = tableField.convertRowIndexToModel(viewRow);
 				            curField = modelField.tableFields.get(modelRow);
 				        }
 				        if (curField!=null) {
-				        	fieldName2Filter = curField.m_logical;
+				        	fieldName2Filter = curField.fieldDesc;
 				        	modelEntity.filterEntity(fieldName2Filter,true);
 				        }
 					}
-				}				
+				}
 			}
 		});
         tableField.setBackground(new Color(0x00DDFFEE));
         tableField.setCellSelectionEnabled(true);
-        
-        tableField.getSelectionModel().addListSelectionListener( new tableSelectionListener() );       
+
+        tableField.getSelectionModel().addListSelectionListener( new tableSelectionListener() );
 
         JScrollPane scrollPaneField = new JScrollPane(tableField);
         scrollPaneField.setMinimumSize(new Dimension(500, 500));
         scrollPaneField.setMaximumSize(new Dimension(800, 500));
-        
+
         JPanel panelRight = new JPanel();
 //        JSplitPane panelRight = new JSplitPane();
         panelRight.setLayout(new BoxLayout(panelRight,BoxLayout.Y_AXIS));
-        
+
         labelFieldFilter = new JLabel();
         labelFieldFilter.setDisplayedMnemonic('2');
         textFieldFilter = new JTextField();
@@ -282,7 +293,7 @@ public class EntityViewer extends JPanel {
         textFieldFilter.getDocument().addDocumentListener(
                 new DocumentListener() {
                     public void changedUpdate(DocumentEvent e) {
-                        newFieldFilter(); 
+                        newFieldFilter();
                     }
                     public void insertUpdate(DocumentEvent e) {
                     	newFieldFilter();
@@ -296,7 +307,7 @@ public class EntityViewer extends JPanel {
         panelRight.add(labelFieldFilter);
         panelRight.add(textFieldFilter);
         panelRight.add(scrollPaneField);
-        
+
         textApplt = new JTextArea();
         textApplt.setBackground(new Color(0x00EEFFDD));
         JScrollPane scrollPaneApplt = new JScrollPane(textApplt);
@@ -310,60 +321,60 @@ public class EntityViewer extends JPanel {
 //        scrollPaneApplt.setMaximumSize(new Dimension(100,100));
         panelRight.add(scrollPaneApplt);
         panelRight.setAlignmentY(TOP_ALIGNMENT);
-        
+
         add(panelLeft);
 //        add(new JSeparator(SwingConstants.VERTICAL));
-        add(panelRight); 
-        
+        add(panelRight);
+
         flagDataAvailable=modelEntity.readInData();
         if(flagDataAvailable){
         	sorterEntity.toggleSortOrder(MyTableModel.COL_PIN);
         	sorterEntity.toggleSortOrder(MyTableModel.COL_PIN);
         }
-       
+
     }
-    
-    
+
+
     protected boolean setupListenersWhenConnected() {
         JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
         if (parentFrame == null) {
             return false;
         }
         parentFrame.addWindowListener(new WindowListener() {
-			
+
 			@Override
 			public void windowOpened(WindowEvent e) {
 			}
-			
+
 			@Override
 			public void windowIconified(WindowEvent e) {
 			}
-			
+
 			@Override
 			public void windowDeiconified(WindowEvent e) {
 			}
-			
+
 			@Override
 			public void windowDeactivated(WindowEvent e) {
 			}
-			
+
 			@Override
 			public void windowClosing(WindowEvent e) {
 				System.out.println("windowClosing");
 				modelEntity.save();
 			}
-			
+
 			@Override
 			public void windowClosed(WindowEvent e) {
 			}
-			
+
 			@Override
 			public void windowActivated(WindowEvent e) {
 			}
 		});
         return true;
     }
-    /** 
+    /**
      * Update the row filter regular expression from the expression in
      * the text box.
      */
@@ -376,19 +387,19 @@ public class EntityViewer extends JPanel {
         	modelEntity.resetEntryList();
         	String filter_text = textEntityFilter.getText().toUpperCase();
         	if(filter_text.length()>0){
-        		int index=MyTableModel.COL_LOG;
+        		int index=MyTableModel.COL_DESC;
         		char first_char = filter_text.charAt(0);
         		if('A'<=first_char && first_char<='Z'||first_char=='_'){
-        			index=MyTableModel.COL_PHY;
+        			index=MyTableModel.COL_NAME;
         		}
-        		rf = RowFilter.regexFilter(filter_text, index); 
+        		rf = RowFilter.regexFilter(filter_text, index);
         		m_filtered_by_field = false;
         	}
         } catch (java.util.regex.PatternSyntaxException e) {
             return;
         }
         sorterEntity.setRowFilter(rf);
-        
+
     }
 
     private void newFieldFilter() {
@@ -397,41 +408,45 @@ public class EntityViewer extends JPanel {
         try {
         	String filter_text = textFieldFilter.getText().toUpperCase();
         	if(filter_text.length()>0){
-        		int index=MyFieldModel.COL_LOG;
+        		int index=MyFieldModel.COL_DESC;
         		char first_char = filter_text.charAt(0);
         		if('A'<=first_char && first_char<='Z'||first_char=='_'){
-        			index=MyFieldModel.COL_PHY;
+        			index=MyFieldModel.COL_NAME;
         		}
-        		rf = RowFilter.regexFilter(filter_text, index); 
+        		rf = RowFilter.regexFilter(filter_text, index);
         	}
         } catch (java.util.regex.PatternSyntaxException e) {
             return;
         }
         sorterField.setRowFilter(rf);
     }
-    
+
     class MyFieldModel extends AbstractTableModel {
         private String[] columnNames = {"NO.",
-        		"logical",
-                "physical",
+        		"field name",
+                "desc",
                 "type",
-                "digits",
-                "index"
+                "length",
+                "pk"
                 };
-        private List<EntityFieldInfo>	tableFields;
-        
-        public final static int COL_LOG=1;
-        public final static int COL_PHY=2;
-        
-    	public void setFields(List<EntityFieldInfo> fields) {
+        private List<FieldInfo>	tableFields;
+
+        public final static int COL_NO   = 0;
+        public final static int COL_NAME = 1;
+        public final static int COL_DESC = 2;
+        public final static int COL_TYPE = 3;
+        public final static int COL_LEN  = 4;
+        public final static int COL_PK   = 5;
+
+    	public void setFields(List<FieldInfo> fields) {
     		tableFields = fields;
     	}
         public MyFieldModel(){
         	tableFields=null;
         }
-        
+
         public int getRowCount() {
-        	if ( tableFields == null ) 
+        	if ( tableFields == null )
         		return 0;
             return tableFields.size();
         }
@@ -441,21 +456,21 @@ public class EntityViewer extends JPanel {
         }
 
         public Object getValueAt(int row, int col) {
-        	if ( tableFields == null ) 
+        	if ( tableFields == null )
         		return null;
         	switch (col) {
-        	case 0:
-        		return tableFields.get(row).m_no;
-        	case 1:
-        		return tableFields.get(row).m_logical;
-        	case 2:
-        		return tableFields.get(row).m_physical;
-        	case 3:
-        		return tableFields.get(row).m_dataType;
-        	case 4:
-        		return tableFields.get(row).m_digits;
-        	case 5:
-        		return tableFields.get(row).m_indexInfo;
+        	case COL_NO:
+        		return tableFields.get(row).no;
+        	case COL_NAME:
+        		return tableFields.get(row).fieldName;
+        	case COL_DESC:
+        		return tableFields.get(row).fieldDesc;
+        	case COL_TYPE:
+        		return tableFields.get(row).dataType;
+        	case COL_LEN:
+        		return tableFields.get(row).length;
+        	case COL_PK:
+        		return tableFields.get(row).pkInfo;
         	default:
         		return null;
         	}
@@ -488,7 +503,7 @@ public class EntityViewer extends JPanel {
          */
         public void setValueAt(Object value, int row, int col) {
 
-//            data[row][col] = value; 
+//            data[row][col] = value;
 //            fireTableCellUpdated(row, col);
 
         }
@@ -497,12 +512,12 @@ public class EntityViewer extends JPanel {
 		public int getColumnCount() {
             return columnNames.length;
 		}
-    	
+
     }
-    
+
     class tableSelectionListener implements ListSelectionListener {
         public void valueChanged(ListSelectionEvent event) {
-        	
+
         	DefaultListSelectionModel model = (DefaultListSelectionModel)event.getSource();
         	ListSelectionListener[] listeners = model.getListSelectionListeners();
         	JTable objTable = null;
@@ -518,7 +533,7 @@ public class EntityViewer extends JPanel {
 	            int viewRow = objTable.getSelectedRow();
 	            if (viewRow != -1) {
 	                int modelRow = objTable.convertRowIndexToModel(viewRow);
-	                String phyName = (String)objTable.getModel().getValueAt(modelRow, MyTableModel.COL_PHY);
+	                String phyName = (String)objTable.getModel().getValueAt(modelRow, MyTableModel.COL_NAME);
 	                m_cur_table = ((MyTableModel)objTable.getModel()).getEntityInfo(phyName);
 	                setNewTableInField(phyName);//TODO
 	            } else {
@@ -531,8 +546,8 @@ public class EntityViewer extends JPanel {
 	            if (viewRow < 0) {
 	            } else {
 	                int modelRow = tableField.convertRowIndexToModel(viewRow);
-	
-	                EntityFieldInfo curField = modelField.tableFields.get(modelRow);
+
+	                FieldInfo curField = modelField.tableFields.get(modelRow);
 	                textApplt.setText(curField.remark.replace('\t', '\n'));
 //	                List<String> appltList = m_applt_map.get(curField.m_physical);
 //	                if(appltList!=null){
@@ -580,7 +595,7 @@ public class EntityViewer extends JPanel {
 			} else if(e.getSource()==textFieldFilter){
 				if(e.getKeyCode()==KeyEvent.VK_DOWN){
 					tableField.requestFocus();
-				}				
+				}
 			} else if(e.getSource()==tableEntity){
 				if(e.getKeyCode()==KeyEvent.VK_T&&
 						(e.getModifiersEx()&KeyEvent.CTRL_DOWN_MASK)==KeyEvent.CTRL_DOWN_MASK){
@@ -588,16 +603,16 @@ public class EntityViewer extends JPanel {
 					int viewRow = objTable.getSelectedRow();
 					if (viewRow != -1) {
 		                int modelRow = objTable.convertRowIndexToModel(viewRow);
-		                String phyName = (String)objTable.getModel().getValueAt(modelRow, MyTableModel.COL_PHY);//TODO
+		                String phyName = (String)objTable.getModel().getValueAt(modelRow, MyTableModel.COL_NAME);//TODO
 
 		                EntityInfo selectedTable = modelEntity.getEntityInfo(phyName);
 						Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
 						String line1="";
 						String line2="";
-						List<EntityFieldInfo> fields = selectedTable.getFields();
+						List<FieldInfo> fields = selectedTable.getFields();
 						for(int i=0;i<fields.size();i++){
-							line1 = line1 + fields.get(i).m_logical + "\t";
-							line2 = line2 + fields.get(i).m_physical + "\t";
+							line1 = line1 + fields.get(i).fieldDesc + "\t";
+							line2 = line2 + fields.get(i).fieldName + "\t";
 						}
 						String text = line1.substring(0, line1.length()-1) + "\n"
 										+ line2.substring(0, line2.length()-1);
@@ -616,20 +631,21 @@ public class EntityViewer extends JPanel {
 		@Override
 		public void keyReleased(KeyEvent e) {
 		}
-    	
+
     }
-    
+
     class MyTableModel extends AbstractTableModel {
-        private String[] columnNames = {"logical",
-                                        "physical",
+        private String[] columnNames = {"entity name",
+                                        "desc",
         								"pin"
                                         };
+        private boolean dirty = false;
         private List<EntityInfo>	m_allEntities;
         private List<EntityInfo> m_curEntities;
-        public final static int COL_LOG = 0;
-        public final static int COL_PHY = 1;
+        public final static int COL_NAME = 0;
+        public final static int COL_DESC = 1;
         public final static int COL_PIN = 2;
-         
+
         public MyTableModel(){
         	m_allEntities = null;
         	m_curEntities = new ArrayList<EntityInfo>();
@@ -643,15 +659,28 @@ public class EntityViewer extends JPanel {
 	        	List<String> tableIDs = new ArrayList<String>();
 	        	for(int i=0;i<m_allEntities.size();i++) {
 	        		if(m_allEntities.get(i).favorite)
-	        			tableIDs.add(m_allEntities.get(i).m_physical);
+	        			tableIDs.add(m_allEntities.get(i).entityName);
 	        	}
-	        	
+
 	            oos.writeObject(tableIDs);
 	            fos.close();
+
+	            // update entity.xml
+//	            EntityWriter writer = new EntityTxtWriter();
+//	            writer.write(m_allEntities, null, "entity_new.txt");
+	            if(dirty){
+	            	EntityWriter writer = null;
+	            	if ( SETTING_FILENAME.endsWith("txt")){
+	            		writer = new EntityTxtWriter();
+	            	} else {
+	            		writer = new EntityXmlWriter();
+	            	}
+	            	writer.write(m_allEntities, null, SETTING_FILENAME);
+	            }
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
+
 		}
 		public void resetEntryList() {
 			m_curEntities.clear();
@@ -661,7 +690,7 @@ public class EntityViewer extends JPanel {
 		public EntityInfo getEntityInfo(String phyName){
 			EntityInfo ret = null;
 			for(int i=0;i<m_curEntities.size();i++){
-				if(phyName.equals(m_curEntities.get(i).m_physical)){
+				if(phyName.equals(m_curEntities.get(i).entityName)){
 					ret=m_curEntities.get(i);
 					break;
 				}
@@ -674,13 +703,22 @@ public class EntityViewer extends JPanel {
 
         @SuppressWarnings("unchecked")
 		public boolean readInData(){
-        	EntityXMLReader entity_reader = new EntityXMLReader();
-        	
-        	String entityXmlPath = SETTING_FILENAME; 
-//        	String appltXmlPath = "applt.xml";
-        	File xml = new File(entityXmlPath);
-        	if (xml.exists()) { 
-        		entity_reader.readInData(entityXmlPath);
+        	EntityReader entity_reader = null;
+
+        	String entityFileName = SETTING_FILENAME;
+        	if(entityFileName.endsWith("txt")){
+        		entity_reader = new EntityTxtReader();
+        	} else if (entityFileName.endsWith("xml")) {
+        		entity_reader = new EntityXmlReader();
+        	} else {
+        		System.err.println(entityFileName+" cannot be read!");
+        		return false;
+
+        	}
+
+        	File entityFile = new File(entityFileName);
+        	if (entityFile.exists()) {
+        		entity_reader.read(entityFileName);
         		m_allEntities = entity_reader.getEntityList();
             	File file = new File("favoriteTable");
             	if ( file.exists() ) {
@@ -702,12 +740,12 @@ public class EntityViewer extends JPanel {
 					if(tableIDs!=null&&tableIDs.size()>0){
 						for(int i=0;i<m_allEntities.size();i++){
 							for(int j=0;j<tableIDs.size();j++){
-								if(m_allEntities.get(i).m_physical.equals(tableIDs.get(j))){
+								if(m_allEntities.get(i).entityName.equals(tableIDs.get(j))){
 									m_allEntities.get(i).favorite = true;
 									break;
 								}
 							}
-							
+
 						}
 					}
             	}
@@ -715,7 +753,7 @@ public class EntityViewer extends JPanel {
         		m_curEntities.addAll(m_allEntities);
         	} else {
         		textEntityFilter.setText("!c<fill entity definition xls path here>");
-        		System.err.println(entityXmlPath+" not found!");
+        		System.err.println(entityFileName+" not found!");
         		return false;
         	}
 
@@ -738,11 +776,11 @@ public class EntityViewer extends JPanel {
         		return null;
         	}
         	switch (col) {
-        	case 0:
-        		return m_curEntities.get(row).m_logical;
-        	case 1:
-        		return m_curEntities.get(row).m_physical;
-        	case 2:
+        	case COL_NAME:
+        		return m_curEntities.get(row).entityName;
+        	case COL_DESC:
+        		return m_curEntities.get(row).entityDesc;
+        	case COL_PIN:
         		return m_curEntities.get(row).favorite;
         	default:
         		return null;
@@ -767,7 +805,7 @@ public class EntityViewer extends JPanel {
         public boolean isCellEditable(int row, int col) {
             //Note that the data/cell address is constant,
             //no matter where the cell appears onscreen.
-        	return col==COL_PIN;
+        	return col==COL_PIN||col==COL_DESC;
         }
 
         /*
@@ -775,13 +813,22 @@ public class EntityViewer extends JPanel {
          * data can change.
          */
         public void setValueAt(Object value, int row, int col) {
-        	if(col==COL_PIN&&(Boolean)value!=m_curEntities.get(row).favorite){
-        		m_curEntities.get(row).favorite=(Boolean)value;
+        	switch (col){
+        	case COL_DESC:
+        		m_curEntities.get(row).entityDesc=(String)value;
+        		dirty = true;
+        		break;
+        	case COL_PIN:
+        	default:
+            	if((Boolean)value!=m_curEntities.get(row).favorite){
+            		m_curEntities.get(row).favorite=(Boolean)value;
+    	        	sorterEntity.toggleSortOrder(COL_PIN);
+    	        	sorterEntity.toggleSortOrder(COL_PIN);
+            	}
+        		break;
         	}
-        	sorterEntity.toggleSortOrder(COL_PIN);
-        	sorterEntity.toggleSortOrder(COL_PIN);
         }
-      
+
 		public void filterEntity(String keyword, boolean quick_mode) {
 
 //			System.out.println("The list will filtered by field name: "+keyword + " in table "+m_cur_table.m_logical);
@@ -792,16 +839,16 @@ public class EntityViewer extends JPanel {
 			for(int i=0;i<m_allEntities.size();i++) {
 				for(int j=0;j<m_allEntities.get(i).getFields().size();j++) {
 					if (quick_mode) {
-						if (keyword.equals(m_allEntities.get(i).getFields().get(j).m_logical)){
+						if (keyword.equals(m_allEntities.get(i).getFields().get(j).fieldDesc)){
 							m_curEntities.add(m_allEntities.get(i));
 							break;
 						}
 					} else {
-						if (m_allEntities.get(i).getFields().get(j).m_physical.contains(keyword) || 
-								m_allEntities.get(i).getFields().get(j).m_logical.contains(keyword) ){
+						if (m_allEntities.get(i).getFields().get(j).fieldName.contains(keyword) ||
+								m_allEntities.get(i).getFields().get(j).fieldDesc.contains(keyword) ){
 							m_curEntities.add(m_allEntities.get(i));
 							break;
-						}						
+						}
 					}
 				}
 			}
@@ -812,17 +859,17 @@ public class EntityViewer extends JPanel {
 //					break;
 //				}
 //			}
-			
+
 			modelEntity.fireTableDataChanged();
 	        RowFilter<MyTableModel, Object> rf = null;
 	        //If current expression doesn't parse, don't update.
 	        try {
-	        	rf = RowFilter.regexFilter("", 0); 
+	        	rf = RowFilter.regexFilter("", 0);
 	        } catch (java.util.regex.PatternSyntaxException e) {
 	            return;
 	        }
 	        sorterEntity.setRowFilter(rf);
-	        
+
 //			System.out.println("Count:"+tableEntity.getRowCount());
 //			for(int i=0;i<tableEntity.getRowCount();i++){
 //				String work = (String)tableEntity.getValueAt(i, 0);
@@ -869,7 +916,7 @@ public class EntityViewer extends JPanel {
         });
 
     }
-    
+
 	private void setNewTableInField(String phyName) {
         EntityInfo selectedTable = modelEntity.getEntityInfo(phyName);
         if ( selectedTable != null ) {
@@ -892,6 +939,6 @@ public class EntityViewer extends JPanel {
         }
 
 	}
-	
+
 
 }

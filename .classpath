@@ -2,6 +2,8 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-	<classpathentry kind="lib" path="D:/04_workspace/entityViewer/lib/poi-3.10-FINAL-20140208.jar"/>
+	<classpathentry kind="lib" path="D:/gao/git/entityViewer/lib/jna.jar"/>
+	<classpathentry kind="lib" path="D:/gao/git/entityViewer/lib/platform.jar"/>
+	<classpathentry kind="lib" path="D:/gao/git/entityViewer/lib/poi-3.10-FINAL-20140208.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
