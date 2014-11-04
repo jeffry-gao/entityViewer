@@ -2,9 +2,12 @@ package common;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +76,8 @@ public class Utility {
 			if(f.exists()&&f.isFile()){
 				try {
 					BufferedReader reader;
-					reader = new BufferedReader(new FileReader(appName));
+//					reader = new BufferedReader(new FileReader(appName));
+					reader = new BufferedReader(new InputStreamReader(new FileInputStream(appName), "utf-8"));
 					String line=null;
 					while((line=reader.readLine())!=null){
 						String[] settingLine = line.split("=");
@@ -86,7 +90,8 @@ public class Utility {
 					e.printStackTrace();
 				}
 			}
-			BufferedWriter writer = new BufferedWriter((new FileWriter(appName)));
+//			BufferedWriter writer = new BufferedWriter((new FileWriter(appName)));
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(appName), "utf-8"));
 			for(String key: properties.keySet()){
 				allProps.put(key, properties.get(key));
 			}
@@ -104,7 +109,8 @@ public class Utility {
 			Map<String,String> props = new HashMap<String, String>();
 			try {
 				BufferedReader reader;
-				reader = new BufferedReader(new FileReader(appName));
+//				reader = new BufferedReader(new FileReader(appName));
+				reader = new BufferedReader(new InputStreamReader(new FileInputStream(appName), "utf-8"));
 				String line=null;
 				while((line=reader.readLine())!=null){
 					String[] settingLine = line.split("=");
@@ -132,7 +138,8 @@ public class Utility {
 			Map<String,String> props = new HashMap<String, String>();
 			try {
 				BufferedReader reader;
-				reader = new BufferedReader(new FileReader(appName));
+//				reader = new BufferedReader(new FileReader(appName));
+				reader = new BufferedReader(new InputStreamReader(new FileInputStream(appName), "utf-8"));
 				String line=null;
 				while((line=reader.readLine())!=null){
 					String[] settingLine = line.split("=");
@@ -171,6 +178,34 @@ public class Utility {
 			method = "s" + method.substring(1);
 		}
 		return method;
+	}
+
+	static public void saveStringList(String appName, List<String> strList){
+		try {
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(appName), "utf-8"));
+			for(int i=0;i<strList.size();i++){
+				writer.write(strList.get(i)+"\n");
+			}
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	static public List<String> loadStringList(String appName){
+		List<String> strList = null;
+		try {
+			strList = new ArrayList<String>();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(appName), "utf-8"));
+			String line=null;
+			while((line=reader.readLine())!=null){
+				strList.add(line);
+			}
+			reader.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return strList;
 	}
 
 }

@@ -27,7 +27,7 @@ public class EntityXmlWriter implements EntityWriter{
 			xtwEntity.writeStartElement("entity_info");
 			xtwEntity.writeCharacters("\n");
 			xtwEntity.writeCharacters("\t");
-			xtwEntity.writeStartElement("entitys");
+			xtwEntity.writeStartElement("entities");
 			xtwEntity.writeCharacters("\n");
 			for(int i=0;i<listTables.size();i++){
 				System.out.println("writing " + String.valueOf(i+1) + ":" + listTables.get(i).entityName);

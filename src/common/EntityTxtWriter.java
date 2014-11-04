@@ -1,16 +1,18 @@
 package common;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
 
 public class EntityTxtWriter implements EntityWriter {
-	public void write(List<EntityInfo> listTables, Map<String,List<String>> mapApplt, String ouputFile){
+	public void write(List<EntityInfo> listTables, Map<String,List<String>> mapApplt, String outputFile){
 		BufferedWriter writer;
 		try {
-			writer = new BufferedWriter(new FileWriter(ouputFile));
+//			writer = new BufferedWriter(new FileWriter(ouputFile));
+			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "utf-8"));
 			int tableCount = listTables.size();
 			for(int i=0;i<tableCount;i++){
 				int colCount = listTables.get(i).listFieldInfo.size();

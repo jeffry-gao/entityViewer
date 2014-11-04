@@ -44,12 +44,12 @@ public class EntityXlsReader implements EntityReader{
 		FileInputStream is = null;
 		HSSFWorkbook inBook = null;
 		HSSFSheet inSheetTbl;
-		HSSFSheet inSheetIdx = null;
+//		HSSFSheet inSheetIdx = null;
 		HSSFRow row = null;
 		HSSFCell cell = null;
 		String field = null;
 		int intField = 0;
-		String tableId = null;
+//		String tableId = null;
 
 		try {
 //			System.out.println("reading from "+path);

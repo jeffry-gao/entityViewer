@@ -3,12 +3,12 @@ profileName=SMAS Cobol
 sourceDir=D:/gao/offline/cur/cur_src/SRC
 fileTypes=cbl
 encodingType=
-loadTime=2957
+loadTime=2908
 
 [sourceProfile]
 profileName=SMAS SQL
 sourceDir=D:/gao/offline/cur/cur_src/PLSQ
 fileTypes=sql
 encodingType=
-loadTime=0
+loadTime=14928
 

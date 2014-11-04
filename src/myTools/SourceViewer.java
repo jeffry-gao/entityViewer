@@ -73,8 +73,9 @@ public class SourceViewer extends JPanel{
 	private final int    widthTextField = 300;
 
 	private boolean   normalMode = true; // true: normal; false:profile edit
+	private JPanel profileMenu;
 	private JLabel	   labelProfile;
-	private JList      listProfileName;
+	private JList<String>      listProfileName;
 	private JTextField textNewProfileName;
 	private JTextField textSourceDir;
 	private JButton    buttonSourceChooser;
@@ -134,13 +135,13 @@ public class SourceViewer extends JPanel{
             }
         });
 
-        JPanel profileMenu = new JPanel();
+        profileMenu = new JPanel();
         profileMenu.setLayout(new BoxLayout(profileMenu, BoxLayout.Y_AXIS));
 
 		loadSetting();
 		labelProfile = new JLabel("All Profile");
 
-		listProfileName = new JList();
+		listProfileName = new JList<String>();
 		listProfileName.setMinimumSize(new Dimension(widthTextField,heightProfile));
 		listProfileName.setMaximumSize(new Dimension(widthTextField,heightProfile*5));
 		listProfileName.setAlignmentX(LEFT_ALIGNMENT);
@@ -152,7 +153,7 @@ public class SourceViewer extends JPanel{
 
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
-				DefaultListModel dlm = (DefaultListModel)listProfileName.getModel();
+				DefaultListModel<String> dlm = (DefaultListModel<String>)listProfileName.getModel();
 				int index = listProfileName.getSelectedIndex();
 				if(index==-1){
 					listProfileName.setSelectedIndex(0);
@@ -160,7 +161,7 @@ public class SourceViewer extends JPanel{
 				}
 				String curProfileName = (String)dlm.get(index);
 
-				System.out.println("old profile:"+curProfile.profileName+curProfile.listFiles.size());
+				System.out.println("old profile:"+curProfile.profileName+" with size="+curProfile.listFiles.size());
 				for(int i=0;i<listProfile.size();i++){
 					if(listProfile.get(i).profileName.equals(curProfileName)){
 						curProfile = listProfile.get(i);
@@ -168,9 +169,11 @@ public class SourceViewer extends JPanel{
 					}
 				}
 
+				System.out.println("new profile:"+curProfile.profileName+" with size="+curProfile.listFiles.size());
 				updateProfileControl(curProfile,false);
 				if(m_service_model!=null){
 					m_service_model.setExistList(curProfile.listFiles);
+					System.out.println("new profile:"+curProfile.profileName+" is set.");
 				}
 
 			}
@@ -182,7 +185,7 @@ public class SourceViewer extends JPanel{
 			public void keyTyped(KeyEvent e) {
 				if(e.getKeyChar()==KeyEvent.VK_DELETE){
 					System.out.println("delete pressed");
-					DefaultListModel dlm = (DefaultListModel)listProfileName.getModel();
+					DefaultListModel<String> dlm = (DefaultListModel<String>)listProfileName.getModel();
 					if(dlm.size()>1){
 						int index = listProfileName.getSelectedIndex();
 						String temp = (String)dlm.get(index);
@@ -230,6 +233,9 @@ public class SourceViewer extends JPanel{
 						textFieldFilter.setText(null);
 						curProfile.listFiles.clear();
 						curProfile.listFiles.addAll(m_service_model.getEntireFileList());
+						System.out.println("listFiles is saved in "+curProfile.profileName+" count="+curProfile.listFiles.size() );
+					} else {
+						System.out.println("not in normal mode!" );
 					}
 				}
 			}
@@ -340,6 +346,7 @@ public class SourceViewer extends JPanel{
 		profileMenu.setAlignmentY(TOP_ALIGNMENT);
 
         textFieldFilter = new JTextField();
+        textFieldFilter.setToolTipText("F5 to get file list; 'show' to show the side panel.");
         labelFilter = new JLabel();
         labelFilter.setLabelFor(textFieldFilter);
         labelFilter.setDisplayedMnemonic(KeyEvent.VK_1);
@@ -366,6 +373,11 @@ public class SourceViewer extends JPanel{
 					System.out.println("VK_ENTER");
 					Cursor orgCurosr = textFieldFilter.getCursor();
 					textFieldFilter.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+					if(textFieldFilter.getText().equals("show"))
+						profileMenu.setVisible(true);
+					else if (textFieldFilter.getText().equals("hide"))
+						profileMenu.setVisible(false);
+					textFieldFilter.setText("");
 					textFieldFilter.setCursor(orgCurosr);
 				}
 			}
@@ -377,6 +389,9 @@ public class SourceViewer extends JPanel{
 			@Override
 			public void keyPressed(KeyEvent e) {
 				System.out.println((int)e.getKeyCode());
+				if(e.getKeyCode()==KeyEvent.VK_F5){
+					m_service_model.initFileList();
+				}
 				if(e.getKeyCode()==KeyEvent.VK_DOWN){
 					tableFiles.requestFocus();
 				}
@@ -396,6 +411,10 @@ public class SourceViewer extends JPanel{
         //selection.
         tableFiles.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tableFiles.setCellSelectionEnabled(true);
+        tableFiles.getColumnModel().getColumn(m_service_model.COL_FILE_NAME).setMinWidth(150);
+        tableFiles.getColumnModel().getColumn(m_service_model.COL_FILE_NAME).setMaxWidth(150);
+        tableFiles.getColumnModel().getColumn(m_service_model.COL_TS).setMinWidth(150);
+        tableFiles.getColumnModel().getColumn(m_service_model.COL_TS).setMaxWidth(150);
         tableFiles.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),"Open");
         tableFiles.getActionMap().put("Open", new AbstractAction() {
 			private static final long serialVersionUID = -3668137586572365321L;
@@ -443,6 +462,7 @@ public class SourceViewer extends JPanel{
         mainPanel.add(scrollPaneTable);
         mainPanel.setAlignmentY(TOP_ALIGNMENT);
 
+        profileMenu.setVisible(false);
         add(profileMenu);
         add(new JSeparator(SwingConstants.VERTICAL));
         add(mainPanel);
@@ -475,7 +495,7 @@ public class SourceViewer extends JPanel{
     }
     private void updateProfileControl(SourceProfile profileToSet, boolean updateComobo){
     	if (updateComobo) {
-    		DefaultListModel  lm = new DefaultListModel();
+    		DefaultListModel<String>  lm = new DefaultListModel<String>();
     		listProfileName.setModel(lm);
 	    	for(int i=0;i<listProfile.size();i++){
 	    		lm.addElement(listProfile.get(i).profileName);
@@ -510,9 +530,11 @@ public class SourceViewer extends JPanel{
 		flagDirty = true;
 //		int lastIndex = comboProfileName.getItemCount()-1;
 //		comboProfileName.removeItemAt(lastIndex);
-		DefaultListModel dlm = (DefaultListModel) listProfileName.getModel();
-		dlm.addElement(sp.profileName);
-		listProfileName.setSelectedIndex(dlm.getSize()-1);
+		DefaultListModel<String> mdl = (DefaultListModel<String>)listProfileName.getModel();
+//		DefaultListModel dlm = (DefaultListModel) listProfileName.getModel();
+
+		mdl.addElement(sp.profileName);
+		listProfileName.setSelectedIndex(mdl.getSize()-1);
 		System.out.println("new profile added:"+
 							sp.profileName+","+
 							sp.sourceDir+","+
@@ -540,15 +562,15 @@ public class SourceViewer extends JPanel{
 		 *
 		 */
     	public final int COL_FILE_NAME = 0;
-    	public final int COL_PATH=1;
+    	public final int COL_DESC=1;
     	public final int COL_TS=2;
-    	public final int COL_DESC=3;
+    	public final int COL_PATH=3;
 
 		private static final long serialVersionUID = 6968203745972823854L;
 		private String[] columnNames = {"file",
-										"path",
+                						"desc(editable)",
                                         "last modified",
-                                        "desc"
+                                        "path"
                                         };
         private List<String>	listAllFiles;
         private List<String>	listFiles;

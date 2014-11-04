@@ -73,7 +73,7 @@ public class MyTabs extends JPanel {
         tabbedPane.setMnemonicAt(0, KeyEvent.VK_E);
 
         JComponent tab2 = new SourceViewer();
-        tabbedPane.addTab("Files", icon, tab2,
+        tabbedPane.addTab("Source", icon, tab2,
                 "List all files");
         tabbedPane.setMnemonicAt(1, KeyEvent.VK_F);
 
