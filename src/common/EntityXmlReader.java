@@ -21,16 +21,16 @@ public class EntityXmlReader implements EntityReader{
 	static List<EntityInfo> m_tables;
 	static EntityInfo m_curTable;
 	static FieldInfo m_curField;
-	static List<String> m_curFiledApplt;
+	static String m_curFiledApplt;
 	static int m_curNo;
-	static Map<String, List<String>> m_fieldToAddApplt;
+	static Map<String, String> m_fieldToAddApplt;
 
 	public EntityXmlReader() {
 		m_tables = new ArrayList<EntityInfo>();
 		m_curTable = null;
 		m_curField = null;
 		m_curNo = 1;
-		m_fieldToAddApplt = new HashMap<String, List<String>>();
+		m_fieldToAddApplt = new HashMap<String, String>();
 		m_curFiledApplt = null;
 	}
 
@@ -38,7 +38,7 @@ public class EntityXmlReader implements EntityReader{
 		return m_tables;
 	}
 
-	public Map<String, List<String>> getAppltMap() {
+	public Map<String, String> getCommentMap() {
 		return m_fieldToAddApplt;
 	}
 
@@ -122,14 +122,14 @@ public class EntityXmlReader implements EntityReader{
 					  if(attributeName.equals("physical")){
 						  m_curTable.entityName = xmlr.getAttributeValue(i);
 					  } else if (attributeName.equals("id")){
-						  m_curTable.m_id = xmlr.getAttributeValue(i);
+						  m_curTable.entityID = xmlr.getAttributeValue(i);
 					  } else if (attributeName.equals("logical")){
-						  m_curTable.entityDesc = xmlr.getAttributeValue(i);
+						  m_curTable.entityNameJP = xmlr.getAttributeValue(i);
 					  }
 				  }
 			  } else if (localName=="field") {
 				  m_curField = new FieldInfo();
-				  m_curField.no = m_curNo;
+				  m_curField.seqNo = m_curNo;
 				  m_curNo++;
 				  for (int i=0; i < xmlr.getAttributeCount(); i++) {
 					  String attributeName = xmlr.getAttributeLocalName(i);
@@ -144,14 +144,14 @@ public class EntityXmlReader implements EntityReader{
 					  } else if (attributeName.equals("indexInfo")){
 						  m_curField.pkInfo = xmlr.getAttributeValue(i);
 					  } else if (attributeName.equals("remark")){
-						  m_curField.remark = xmlr.getAttributeValue(i);
+						  m_curField.userComment = xmlr.getAttributeValue(i);
 					  }
 				  }
 			  } else if (localName=="applts") {
 				  System.out.println("start to read applts...");
 			  } else if (localName=="applt") {
 				  if(xmlr.getAttributeCount()>0&&xmlr.getAttributeLocalName(0).equals("field_name")){
-					  m_curFiledApplt = new ArrayList<String>();
+					  m_curFiledApplt = new String();
 					  m_fieldToAddApplt.put(xmlr.getAttributeValue(0), m_curFiledApplt);
 				  }
 			  } else if (localName=="applt_option") {
@@ -164,7 +164,7 @@ public class EntityXmlReader implements EntityReader{
 					  }
 				  }
 				  if(m_curFiledApplt!=null)
-					  m_curFiledApplt.add(value+"\t"+name);
+					  m_curFiledApplt = m_curFiledApplt + (value+"\t"+name) + "\n";
 			  }
 		  }
 	}
@@ -222,7 +222,7 @@ public class EntityXmlReader implements EntityReader{
 			}
 		}
 		if (physicalName.length()>0) {
-			m_curFiledApplt = new ArrayList<String>();
+			m_curFiledApplt = new String();
 			m_fieldToAddApplt.put(physicalName, m_curFiledApplt);
 		}
 	}
@@ -241,6 +241,18 @@ public class EntityXmlReader implements EntityReader{
 			  }
 		  }
 		  if (key.length()>0)
-			  m_curFiledApplt.add(key+"\t"+value);
+			  m_curFiledApplt = m_curFiledApplt + (key+"\t"+value) + "\n";
+	}
+
+	@Override
+	public void read(String fileName, String appltFile) {
+		// TODO 自動生成されたメソッド・スタブ
+
+	}
+
+	@Override
+	public void setKeyword(String prefix) {
+		//
+
 	}
 }

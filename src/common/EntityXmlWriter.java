@@ -1,7 +1,6 @@
 package common;
 
 import java.io.FileOutputStream;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,8 +11,7 @@ public class EntityXmlWriter implements EntityWriter{
 
 
 	@Override
-	public void write(List<EntityInfo> listTables,
-			Map<String, List<String>> mapApplt, String ouputFile) {
+	public void write(List<EntityInfo> listTables, String ouputFile) {
 		FileOutputStream out = null;
 
 		try {
@@ -33,8 +31,8 @@ public class EntityXmlWriter implements EntityWriter{
 				System.out.println("writing " + String.valueOf(i+1) + ":" + listTables.get(i).entityName);
 				xtwEntity.writeCharacters("\t\t");
 				xtwEntity.writeStartElement("entity");
-				xtwEntity.writeAttribute("id", listTables.get(i).m_id);
-				xtwEntity.writeAttribute("logical", listTables.get(i).entityDesc);
+				xtwEntity.writeAttribute("id", listTables.get(i).entityID);
+				xtwEntity.writeAttribute("logical", listTables.get(i).entityNameJP);
 				xtwEntity.writeAttribute("physical", listTables.get(i).entityName);
 				xtwEntity.writeCharacters("\n");
 				List<FieldInfo> fieldInfos = listTables.get(i).getFields();
@@ -47,7 +45,7 @@ public class EntityXmlWriter implements EntityWriter{
 					xtwEntity.writeAttribute("physical", fieldInfos.get(j).fieldName);
 					xtwEntity.writeAttribute("datatype", fieldInfos.get(j).dataType);
 					xtwEntity.writeAttribute("digits", fieldInfos.get(j).length);
-					xtwEntity.writeAttribute("remark", fieldInfos.get(j).remark);
+					xtwEntity.writeAttribute("remark", fieldInfos.get(j).userComment);
 					xtwEntity.writeAttribute("indexInfo", fieldInfos.get(j).pkInfo);
 					xtwEntity.writeEndElement();
 					xtwEntity.writeCharacters("\n");
@@ -60,36 +58,6 @@ public class EntityXmlWriter implements EntityWriter{
 			xtwEntity.writeEndElement();
 			xtwEntity.writeCharacters("\n");
 
-			xtwEntity.writeCharacters("\t");
-			xtwEntity.writeStartElement("applts");
-			xtwEntity.writeCharacters("\n");
-			if( mapApplt==null )
-				mapApplt = new  HashMap<String,List<String>>();
-			for(String key: mapApplt.keySet()){
-				xtwEntity.writeCharacters("\t\t");
-				xtwEntity.writeStartElement("applt");
-				int count = mapApplt.get(key).size();
-				xtwEntity.writeAttribute("field_name", key);
-				xtwEntity.writeCharacters("\n");
-				for(int i=0;i<count;i++){
-					String pair[] = mapApplt.get(key).get(i).split("\t");
-					if(pair.length>1){
-						xtwEntity.writeCharacters("\t\t\t");
-						xtwEntity.writeStartElement("applt_option");
-						xtwEntity.writeAttribute("applt_value", pair[0]);
-						xtwEntity.writeAttribute("applt_name", pair[1]);
-						xtwEntity.writeEndElement();
-						xtwEntity.writeCharacters("\n");
-					}
-				}
-				xtwEntity.writeCharacters("\t\t");
-				xtwEntity.writeEndElement();
-				xtwEntity.writeCharacters("\n");
-			}
-
-			xtwEntity.writeCharacters("\t");
-			xtwEntity.writeEndElement();//applts
-			xtwEntity.writeCharacters("\n");
 			xtwEntity.writeEndElement();//entity_info
 			xtwEntity.flush();
 			xtwEntity.close();
@@ -104,6 +72,13 @@ public class EntityXmlWriter implements EntityWriter{
 			}
 		}
 		System.out.println("Over.");
+	}
+
+	@Override
+	public void write(List<EntityInfo> listTables, String outputFileName,
+			Map<String, String> commentMap, String outputComment) {
+		// TODO 自動生成されたメソッド・スタブ
+
 	}
 
 }

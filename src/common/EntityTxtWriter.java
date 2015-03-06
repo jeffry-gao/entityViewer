@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public class EntityTxtWriter implements EntityWriter {
-	public void write(List<EntityInfo> listTables, Map<String,List<String>> mapApplt, String outputFile){
+	public void write(List<EntityInfo> listTables, String outputFile){
 		BufferedWriter writer;
 		try {
 //			writer = new BufferedWriter(new FileWriter(ouputFile));
@@ -17,7 +17,7 @@ public class EntityTxtWriter implements EntityWriter {
 			for(int i=0;i<tableCount;i++){
 				int colCount = listTables.get(i).listFieldInfo.size();
 				String physicalName = listTables.get(i).entityName;
-				String logicalName = listTables.get(i).entityDesc;
+				String logicalName = listTables.get(i).entityNameJP;
 				for(int j=0;j<colCount;j++){
 					FieldInfo workInfo = listTables.get(i).listFieldInfo.get(j);
 					writer.write(physicalName+"\t");
@@ -26,6 +26,7 @@ public class EntityTxtWriter implements EntityWriter {
 					writer.write(workInfo.fieldDesc+"\t");
 					writer.write(workInfo.dataType+"\t");
 					writer.write(workInfo.length+"\t");
+					writer.write(workInfo.precision+"\t");
 					writer.write("N\t");//TODO
 					writer.write(workInfo.pkInfo+"\n"); //new line
 
@@ -35,6 +36,11 @@ public class EntityTxtWriter implements EntityWriter {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void write(List<EntityInfo> listTables, String outputFileName, Map<String, String> commentMap, String outputComment) {
+
 	}
 
 }

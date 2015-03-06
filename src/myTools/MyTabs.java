@@ -75,7 +75,7 @@ public class MyTabs extends JPanel {
         JComponent tab2 = new SourceViewer();
         tabbedPane.addTab("Source", icon, tab2,
                 "List all files");
-        tabbedPane.setMnemonicAt(1, KeyEvent.VK_F);
+        tabbedPane.setMnemonicAt(1, KeyEvent.VK_S);
 
 
         //Add the tabbed pane to this panel.

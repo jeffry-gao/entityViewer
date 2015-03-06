@@ -17,10 +17,14 @@ import java.awt.event.WindowListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -33,6 +37,7 @@ import javax.swing.AbstractAction;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -70,21 +75,22 @@ public class SourceViewer extends JPanel{
 	private static final int SEP_SIZE = 10;
 	private final String unsavedProfileName = "[unsaved]";
 	private final int    heightProfile = 30;
-	private final int    widthTextField = 300;
+	private final int    sideMenuWidth = 300;
 
 	private boolean   normalMode = true; // true: normal; false:profile edit
-	private JPanel profileMenu;
-	private JLabel	   labelProfile;
+	private JPanel    sideMenu;
+	private JLabel    labelProfile;
 	private JList<String>      listProfileName;
 	private JTextField textNewProfileName;
 	private JTextField textSourceDir;
 	private JButton    buttonSourceChooser;
 	private JTextField textFileTypes;
 	private JButton    buttonAddProfile;
+	private JCheckBox   checkClearCache;
 	private Timer		timer;
 
 	private JLabel				labelFilter;
-	private JTextField 			textFieldFilter;
+	private JTextField 			textFileFilter;
 	private JTable 				tableFiles;
     private SourceListModel 	m_service_model;
     private TableRowSorter<SourceListModel> sorterFileTable;
@@ -99,6 +105,9 @@ public class SourceViewer extends JPanel{
     	String fileTypes="";
     	String encodingType="";
     	long   loadTime=0;
+    	boolean recursive=true;
+    	boolean getLastModified=true;
+    	String prefix = null;
     	List<String> listFiles=null;
 
     	SourceProfile(){
@@ -135,15 +144,16 @@ public class SourceViewer extends JPanel{
             }
         });
 
-        profileMenu = new JPanel();
-        profileMenu.setLayout(new BoxLayout(profileMenu, BoxLayout.Y_AXIS));
+        sideMenu = new JPanel();
+        sideMenu.setLayout(new BoxLayout(sideMenu, BoxLayout.Y_AXIS));
+        sideMenu.setMaximumSize(new Dimension(sideMenuWidth,1028));
 
 		loadSetting();
 		labelProfile = new JLabel("All Profile");
 
 		listProfileName = new JList<String>();
-		listProfileName.setMinimumSize(new Dimension(widthTextField,heightProfile));
-		listProfileName.setMaximumSize(new Dimension(widthTextField,heightProfile*5));
+		listProfileName.setMinimumSize(new Dimension(sideMenuWidth,heightProfile));
+		listProfileName.setMaximumSize(new Dimension(sideMenuWidth,heightProfile*5));
 		listProfileName.setAlignmentX(LEFT_ALIGNMENT);
 		listProfileName.setAlignmentY(TOP_ALIGNMENT);
 		listProfileName.setVisibleRowCount(10);
@@ -212,6 +222,7 @@ public class SourceViewer extends JPanel{
 								curProfile.loadTime=end-start;
 								flagDirty=true;
 							}
+
 					    }else{
 					    	//TODO
 							Thread thr = new Thread(new Runnable() {
@@ -230,7 +241,7 @@ public class SourceViewer extends JPanel{
 							});
 					    	timer.start();
 						}
-						textFieldFilter.setText(null);
+						textFileFilter.setText(null);
 						curProfile.listFiles.clear();
 						curProfile.listFiles.addAll(m_service_model.getEntireFileList());
 						System.out.println("listFiles is saved in "+curProfile.profileName+" count="+curProfile.listFiles.size() );
@@ -249,8 +260,8 @@ public class SourceViewer extends JPanel{
 			}
 		});
 		textNewProfileName = new JTextField();
-		textNewProfileName.setMinimumSize(new Dimension(widthTextField,heightProfile));
-		textNewProfileName.setMaximumSize(new Dimension(widthTextField,heightProfile));
+		textNewProfileName.setMinimumSize(new Dimension(sideMenuWidth,heightProfile));
+		textNewProfileName.setMaximumSize(new Dimension(sideMenuWidth,heightProfile));
 		textNewProfileName.setAlignmentX(LEFT_ALIGNMENT);
 		textNewProfileName.setVisible(false);
 		textNewProfileName.addKeyListener(new KeyListener() {
@@ -270,8 +281,8 @@ public class SourceViewer extends JPanel{
 		});
 
 		buttonAddProfile = new JButton("Add");
-		buttonAddProfile.setMinimumSize(new Dimension(widthTextField,heightProfile));
-		buttonAddProfile.setMaximumSize(new Dimension(widthTextField,heightProfile));
+		buttonAddProfile.setMinimumSize(new Dimension(sideMenuWidth,heightProfile));
+		buttonAddProfile.setMaximumSize(new Dimension(sideMenuWidth,heightProfile));
 		buttonAddProfile.setAlignmentX(LEFT_ALIGNMENT);
 		buttonAddProfile.setAlignmentY(TOP_ALIGNMENT);
 		buttonAddProfile.addActionListener(new ActionListener() {
@@ -290,14 +301,14 @@ public class SourceViewer extends JPanel{
 		labelPath.setAlignmentY(TOP_ALIGNMENT);
 		textSourceDir = new JTextField();
 		textSourceDir.setEditable(false);
-		textSourceDir.setMinimumSize(new Dimension(widthTextField,heightProfile));
-		textSourceDir.setMaximumSize(new Dimension(widthTextField,heightProfile));
+		textSourceDir.setMinimumSize(new Dimension(sideMenuWidth,heightProfile));
+		textSourceDir.setMaximumSize(new Dimension(sideMenuWidth,heightProfile));
 		textSourceDir.setAlignmentX(LEFT_ALIGNMENT);
 		textSourceDir.setAlignmentY(TOP_ALIGNMENT);
 
 		buttonSourceChooser = new JButton("...");
-		buttonSourceChooser.setPreferredSize(new Dimension(widthTextField/2,heightProfile));
-		buttonSourceChooser.setMinimumSize(new Dimension(widthTextField/2,heightProfile));
+		buttonSourceChooser.setPreferredSize(new Dimension(sideMenuWidth/2,heightProfile));
+		buttonSourceChooser.setMinimumSize(new Dimension(sideMenuWidth/2,heightProfile));
 		buttonSourceChooser.setEnabled(false);
 		buttonSourceChooser.addActionListener(new ActionListener() {
 			@Override
@@ -318,42 +329,47 @@ public class SourceViewer extends JPanel{
 		});
 		JLabel labelFileType = new JLabel("File Types");
 		textFileTypes  = new JTextField();
-		textFileTypes.setMinimumSize(new Dimension(widthTextField,heightProfile));
-		textFileTypes.setMaximumSize(new Dimension(widthTextField,heightProfile));
+		textFileTypes.setMinimumSize(new Dimension(sideMenuWidth,heightProfile));
+		textFileTypes.setMaximumSize(new Dimension(sideMenuWidth,heightProfile));
 		textFileTypes.setAlignmentX(LEFT_ALIGNMENT);
 		textFileTypes.setAlignmentY(TOP_ALIGNMENT);
 		textFileTypes.setEditable(false);
 		textFileTypes.setToolTipText("File Types (separate with ; )");
 
+		checkClearCache = new JCheckBox();
+		checkClearCache.setText("Clear Cache");
+
 		updateProfileControl(curProfile,true);
 
-		profileMenu.add(labelProfile);
-		profileMenu.add(listProfileName);
-		profileMenu.add(textNewProfileName);
-		profileMenu.add(buttonAddProfile);
+		sideMenu.add(labelProfile);
+		sideMenu.add(listProfileName);
+		sideMenu.add(textNewProfileName);
+//		profileMenu.add(buttonAddProfile);
 		JSeparator sep1 = new JSeparator(SwingConstants.HORIZONTAL);
-		sep1.setMaximumSize(new Dimension(widthTextField, SEP_SIZE));
-		profileMenu.add(sep1);
-		profileMenu.add(labelPath);
-		profileMenu.add(textSourceDir);
-		profileMenu.add(buttonSourceChooser);
+		sep1.setMaximumSize(new Dimension(sideMenuWidth, SEP_SIZE));
+		sideMenu.add(sep1);
+		sideMenu.add(labelPath);
+		sideMenu.add(textSourceDir);
+//		profileMenu.add(buttonSourceChooser);
 		JSeparator sep2 = new JSeparator(SwingConstants.HORIZONTAL);
-		sep2.setMaximumSize(new Dimension(widthTextField, SEP_SIZE));
-		profileMenu.add(sep2);
-		profileMenu.add(labelFileType);
-		profileMenu.add(textFileTypes);
-		profileMenu.setAlignmentX(LEFT_ALIGNMENT);
-		profileMenu.setAlignmentY(TOP_ALIGNMENT);
+		sep2.setMaximumSize(new Dimension(sideMenuWidth, SEP_SIZE));
+		sideMenu.add(sep2);
+		sideMenu.add(labelFileType);
+		sideMenu.add(textFileTypes);
+		sideMenu.add(checkClearCache);
+		sideMenu.setAlignmentX(LEFT_ALIGNMENT);
+		sideMenu.setAlignmentY(TOP_ALIGNMENT);
 
-        textFieldFilter = new JTextField();
-        textFieldFilter.setToolTipText("F5 to get file list; 'show' to show the side panel.");
+        textFileFilter = new JTextField();
+        textFileFilter.setToolTipText("F5 to get file list; 'show' to show the side panel.");
         labelFilter = new JLabel();
-        labelFilter.setLabelFor(textFieldFilter);
+        labelFilter.setLabelFor(textFileFilter);
         labelFilter.setDisplayedMnemonic(KeyEvent.VK_1);
         //Whenever filterText changes, invoke newFilter.
-//        textFieldFilter.setPreferredSize(new Dimension(50,80));
-        textFieldFilter.addFocusListener(new MyFocusListener());
-        textFieldFilter.getDocument().addDocumentListener(
+        textFileFilter.setPreferredSize(new Dimension(2000,30));
+        textFileFilter.setMaximumSize(new Dimension(2000,30));
+        textFileFilter.addFocusListener(new MyFocusListener());
+        textFileFilter.getDocument().addDocumentListener(
                 new DocumentListener() {
                     public void changedUpdate(DocumentEvent e) {
                     	newTableFilter();
@@ -365,20 +381,20 @@ public class SourceViewer extends JPanel{
                     	newTableFilter();
                     }
                 });
-        textFieldFilter.addKeyListener(new KeyListener() {
+        textFileFilter.addKeyListener(new KeyListener() {
 
 			@Override
 			public void keyTyped(KeyEvent e) {
 				if(e.getKeyChar()==KeyEvent.VK_ENTER){
 					System.out.println("VK_ENTER");
-					Cursor orgCurosr = textFieldFilter.getCursor();
-					textFieldFilter.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-					if(textFieldFilter.getText().equals("show"))
-						profileMenu.setVisible(true);
-					else if (textFieldFilter.getText().equals("hide"))
-						profileMenu.setVisible(false);
-					textFieldFilter.setText("");
-					textFieldFilter.setCursor(orgCurosr);
+					Cursor orgCurosr = textFileFilter.getCursor();
+					textFileFilter.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+					if(textFileFilter.getText().equals("show"))
+						sideMenu.setVisible(true);
+					else if (textFileFilter.getText().equals("hide"))
+						sideMenu.setVisible(false);
+					textFileFilter.setText("");
+					textFileFilter.setCursor(orgCurosr);
 				}
 			}
 
@@ -388,16 +404,26 @@ public class SourceViewer extends JPanel{
 
 			@Override
 			public void keyPressed(KeyEvent e) {
-				System.out.println((int)e.getKeyCode());
-				if(e.getKeyCode()==KeyEvent.VK_F5){
-					m_service_model.initFileList();
+//				System.out.println((int)e.getKeyCode());
+//				if(e.getKeyCode()==KeyEvent.VK_F5){
+//					Cursor orgCurosr = textFileFilter.getCursor();
+//					textFileFilter.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+//					m_service_model.initFileList();
+//					textFileFilter.setCursor(orgCurosr);
+//				}
+				if(e.getModifiersEx()==e.CTRL_DOWN_MASK){
+					if(e.getKeyCode()==KeyEvent.VK_S){
+						System.out.println("Show panel");
+						sideMenu.setVisible(true);
+						listProfileName.requestFocus();
+					}
 				}
 				if(e.getKeyCode()==KeyEvent.VK_DOWN){
 					tableFiles.requestFocus();
 				}
 			}
 		});
-        textFieldFilter.setAlignmentX(LEFT_ALIGNMENT);
+        textFileFilter.setAlignmentX(LEFT_ALIGNMENT);
 
         //Create a table with a sorter.
         m_service_model = new SourceListModel();
@@ -412,7 +438,7 @@ public class SourceViewer extends JPanel{
         tableFiles.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tableFiles.setCellSelectionEnabled(true);
         tableFiles.getColumnModel().getColumn(m_service_model.COL_FILE_NAME).setMinWidth(150);
-        tableFiles.getColumnModel().getColumn(m_service_model.COL_FILE_NAME).setMaxWidth(150);
+//        tableFiles.getColumnModel().getColumn(m_service_model.COL_FILE_NAME).setMaxWidth(150);
         tableFiles.getColumnModel().getColumn(m_service_model.COL_TS).setMinWidth(150);
         tableFiles.getColumnModel().getColumn(m_service_model.COL_TS).setMaxWidth(150);
         tableFiles.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),"Open");
@@ -458,12 +484,12 @@ public class SourceViewer extends JPanel{
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.add(labelFilter);
-        mainPanel.add(textFieldFilter);
+        mainPanel.add(textFileFilter);
         mainPanel.add(scrollPaneTable);
         mainPanel.setAlignmentY(TOP_ALIGNMENT);
 
-        profileMenu.setVisible(false);
-        add(profileMenu);
+        sideMenu.setVisible(false);
+        add(sideMenu);
         add(new JSeparator(SwingConstants.VERTICAL));
         add(mainPanel);
     }
@@ -548,7 +574,7 @@ public class SourceViewer extends JPanel{
         m_service_model.removeKeywordFilter();
         //If current expression doesn't parse, don't update.
         try {
-        	String filter_text = textFieldFilter.getText();
+        	String filter_text = textFileFilter.getText();
         	rf = RowFilter.regexFilter(filter_text, 0,3);
         } catch (java.util.regex.PatternSyntaxException e) {
             return;
@@ -600,20 +626,70 @@ public class SourceViewer extends JPanel{
         	listFiles.addAll(listAllFiles);
         	fireTableDataChanged();
 
-        	textFieldFilter.setText(null);
+        	textFileFilter.setText(null);
         	tableFiles.clearSelection();
         	tableFiles.getRowSorter().setSortKeys(null);
+        }
+
+        private boolean loadCache(List<String> stringList, String name){
+    		try {
+    			File f = new File(name);
+    			if(!f.exists()){
+    				return false;
+    			}
+
+    			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(name), "utf-8"));
+    			String line=null;
+    			while((line=reader.readLine())!=null){
+    				stringList.add(line);
+    			}
+    			reader.close();
+    		} catch (FileNotFoundException e) {
+    			System.err.println("cache file not found!");
+    		} catch (IOException e) {
+    			e.printStackTrace();
+    		}
+    		return true;
+        }
+
+        private void saveCache(List<String> stringList, String name){
+    		try {
+    			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(name), "utf-8"));
+    			for(int i=0;i<stringList.size();i++){
+    				writer.write(stringList.get(i)+"\n");
+    			}
+    			writer.close();
+
+    		} catch (FileNotFoundException e) {
+    			e.printStackTrace();
+    		} catch (IOException e) {
+    			e.printStackTrace();
+    		}
+
         }
 
         public void initFileList(){
         	File srcDir = new File(curProfile.sourceDir);
         	listAllFiles.clear();
         	listFiles.clear();
-    		pickSourceFile(srcDir);
+        	Cursor orgCursor = sideMenu.getCursor();
+        	sideMenu.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+        	if(checkClearCache.isSelected()){
+        		pickSourceFile(srcDir);
+        		Utility.saveStringList(curProfile.profileName,listAllFiles);
+        	} else {
+        		listAllFiles = Utility.loadStringList( curProfile.profileName);
+        		if(listAllFiles==null){
+            		pickSourceFile(srcDir);
+            		Utility.saveStringList(curProfile.profileName,listAllFiles);
+        		}
+        	}
+        	sideMenu.setCursor(orgCursor);
     		listFiles.addAll(listAllFiles);
     		if (listFiles.size()>0)
     			fireTableDataChanged();
     		loadFileDescs();
+    		sideMenu.setVisible(false);
         }
 
         private void loadFileDescs(){
@@ -630,7 +706,8 @@ public class SourceViewer extends JPanel{
         		for(int i=0;i<list.length;i++){
         			String fileName=list[i].getName();
         			if (list[i].isDirectory()) {
-        				pickSourceFile(list[i]);
+        				if(curProfile.recursive)
+        					pickSourceFile(list[i]);
         			} else {
         				boolean isType = false;
         				if(curProfile.fileTypes.equals("*")||curProfile.fileTypes.isEmpty()) {
@@ -644,15 +721,24 @@ public class SourceViewer extends JPanel{
 	        					}
 	        				}
         				}
+        				if(curProfile.prefix!=null){
+        					if(!fileName.startsWith(curProfile.prefix))
+        						continue;
+        				}
         				if (isType) {
 	        				String fullName = list[i].getPath();
 	        				fullName = fullName.replace('\\', '/');
-	        				File file2Add = new File(fullName);
-	        				long lastModifytime = file2Add.lastModified();
-	        				Date date = new Date(lastModifytime);
-	        				DateFormat format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-//	        				System.out.println(format.format(date));
-	        				listAllFiles.add(fullName+"!"+format.format(date));
+	        				String modifiedTime = "-";
+	        				if(curProfile.getLastModified){
+		        				File file2Add = new File(fullName);
+		        				long lastModifytime = file2Add.lastModified();
+		        				Date date = new Date(lastModifytime);
+		        				DateFormat format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		        				modifiedTime = format.format(date);
+	        				}
+	        				String insertString = fullName+"!"+modifiedTime;
+//	        				System.out.println(insertString);
+	        				listAllFiles.add(insertString);
         				}
         			}
         		}
@@ -715,6 +801,9 @@ public class SourceViewer extends JPanel{
 			String line=null;
 			SourceProfile temp = null;
 			while((line=reader.readLine())!=null){
+				if(line.startsWith(";")){
+					continue;
+				}
 				if(line.contains("[sourceProfile]")){
 					temp = new SourceProfile();
 					listProfile.add(temp);
@@ -735,6 +824,12 @@ public class SourceViewer extends JPanel{
 					temp.encodingType=settingLine[1];
 				} else if (settingLine.length>1&&settingLine[0].equals("loadTime")) {
 					temp.loadTime=Integer.parseInt(settingLine[1]);
+				} else if (settingLine.length>1&&settingLine[0].equals("recursive")){
+					temp.recursive=Boolean.parseBoolean(settingLine[1]);
+				} else if (settingLine.length>1&&settingLine[0].equals("getLastModified")){
+					temp.getLastModified=Boolean.parseBoolean(settingLine[1]);
+				} else if (settingLine.length>1&&settingLine[0].equals("prefix")){
+					temp.prefix=settingLine[1];
 				}
 			}
 			reader.close();

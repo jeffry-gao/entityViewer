@@ -1,14 +1,15 @@
 package common;
 
 public class FieldInfo {
-	public int    no;
+	public int    seqNo;
 	public String fieldDesc="";
 	public String fieldName="";
 	public String dataType="";
 	public String length="";
+	public String precision="";
 	public String pkInfo="";
-	public String remark="";
+	public String userComment="";
 	public FieldInfo(){
-		no = 0;
+		seqNo = 0;
 	}
 }

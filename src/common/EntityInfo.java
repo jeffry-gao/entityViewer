@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EntityInfo {
-	public String m_id="";
-	public String entityDesc="";
-	public String entityName="";
+	public String entityID=""; //種別＋連番とか、あまり使わない
+	public String entityNameJP=""; //日本語名
+	public String entityName=""; //英語名
 	public boolean favorite=false;
 	List<FieldInfo> listFieldInfo;
 	public EntityInfo(){

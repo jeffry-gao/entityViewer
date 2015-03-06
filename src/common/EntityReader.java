@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Map;
 
 public interface EntityReader {
+	public void read(String fileName, String commentFile);
 	public void read(String fileName);
+	public void setKeyword(String prefix);
 	public List<EntityInfo> getEntityList();
-	public Map<String, List<String>> getAppltMap();
+	public Map<String, String> getCommentMap();
 }
