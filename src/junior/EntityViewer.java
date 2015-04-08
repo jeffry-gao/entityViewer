@@ -1,4 +1,4 @@
-package myTools;
+package junior;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -58,8 +58,8 @@ public class EntityViewer extends JPanel {
     /**
 	 *
 	 */
-	private final String SETTING_FILENAME = "entity.txt";
-//	private final String SETTING_FILENAME = "entity.xml";
+	private final String SETTING1="favoriteTables";
+
 	private final int HEIGHT_TEXT=30;
 	private final int WIDTH_ENTITY_NAME=0;
 	private final int WIDTH_ENTITY_DESC=0;
@@ -71,6 +71,8 @@ public class EntityViewer extends JPanel {
 	private final int WIDTH_FIELD_LEN=0;
 	private final int WIDTH_FIELD_PK=0;
 
+	private String entityDataFile = "entity.txt";//default
+	private String entityPrefix = "";
     private boolean m_filtered_by_field = false;
     private String  fieldName2Filter = "";
     private boolean flagDataAvailable = false;
@@ -96,8 +98,25 @@ public class EntityViewer extends JPanel {
 
     private Map<String,String> mapComment = new HashMap<String,String>();
 
+    public EntityViewer(String dataFile){
+    	super();
+    	entityDataFile = dataFile;
+    	init();
+    }
+
+    public EntityViewer(String dataFile, String prefix){
+    	super();
+    	entityDataFile = dataFile;
+    	entityPrefix = prefix;
+    	init();
+    }
+
     public EntityViewer() {
-        super();
+    	super();
+    	init();
+    }
+
+    private void init() {
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         addHierarchyListener(new HierarchyListener() {
 
@@ -669,18 +688,18 @@ public class EntityViewer extends JPanel {
 				if (m_allEntities.get(i).favorite)
 					tableNames.add(m_allEntities.get(i).entityName);
 			}
-			Utility.saveStringList("favoriteTables", tableNames);
+			Utility.saveStringList(entityPrefix+SETTING1, tableNames);
 			// update entity.xml
 			// EntityWriter writer = new EntityTxtWriter();
 			// writer.write(m_allEntities, null, "entity_new.txt");
 
 			EntityWriter writer = null;
-			if (SETTING_FILENAME.endsWith("txt")) {
+			if (entityDataFile.endsWith("txt")) {
 				writer = new EntityTxtWriter();
 			} else {
 				writer = new EntityXmlWriter();
 			}
-			writer.write(m_allEntities, SETTING_FILENAME);
+			writer.write(m_allEntities, entityDataFile);
 
 		}
 		public void resetEntryList() {
@@ -705,7 +724,7 @@ public class EntityViewer extends JPanel {
 		public boolean readInData(){
         	EntityReader entity_reader = null;
 
-        	String entityFileName = SETTING_FILENAME;
+        	String entityFileName = entityDataFile;
         	if(entityFileName.endsWith("txt")){
         		entity_reader = new EntityTxtReader();
         	} else if (entityFileName.endsWith("xml")) {
@@ -720,9 +739,10 @@ public class EntityViewer extends JPanel {
         	if (entityFile.exists()) {
         		entity_reader.read(entityFileName);
         		m_allEntities = entity_reader.getEntityList();
-            	File file = new File("favoriteTables");
+        		String favoriteTables = entityPrefix + SETTING1;
+            	File file = new File(favoriteTables);
             	if ( file.exists() ) {
-            		List<String> tableNames = Utility.loadStringList("favoriteTables");
+            		List<String> tableNames = Utility.loadStringList(favoriteTables);
 
 					if(tableNames!=null&&tableNames.size()>0){
 						for(int i=0;i<m_allEntities.size();i++){

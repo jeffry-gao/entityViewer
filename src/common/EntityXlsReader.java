@@ -137,6 +137,11 @@ public class EntityXlsReader implements EntityReader{
 				field = cell.getStringCellValue();
 				curField.fieldName = field;
 
+				if(curField.fieldDesc.isEmpty())
+					curField.fieldDesc = curField.fieldName;
+				if(curField.fieldName.isEmpty())
+					curField.fieldName = curField.fieldDesc;
+
 				cell = row.getCell(colFieldType);
 				field = cell.getStringCellValue();
 				if(field.isEmpty()){

@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package myTools;
+package junior;
 
 /*
  * TabbedPaneDemo.java requires one additional file:
@@ -68,14 +68,22 @@ public class MyTabs extends JPanel {
         JTabbedPane tabbedPane = new JTabbedPane();
         ImageIcon icon = createImageIcon("images/middle.gif");
 
-        JComponent tab1 = new EntityViewer();
-        tabbedPane.addTab("Entity", icon, tab1, "Entity");
-        tabbedPane.setMnemonicAt(0, KeyEvent.VK_E);
+        JComponent tab0 = new Startup();
+        tabbedPane.addTab("Startup",icon, tab0,"Dash board");
+        tabbedPane.setMnemonicAt(0, KeyEvent.VK_S);
+
+        JComponent tab11 = new EntityViewer("CurEntity.txt","SMAS_CUR_");
+        tabbedPane.addTab("現行", icon, tab11, "現行");
+        tabbedPane.setMnemonicAt(1, KeyEvent.VK_G);
+
+        JComponent tab12 = new EntityViewer("NSEntity.txt","SMAS_NS_");
+        tabbedPane.addTab("ＮＳ", icon, tab12, "ＮＳ");
+        tabbedPane.setMnemonicAt(2, KeyEvent.VK_N);
 
         JComponent tab2 = new SourceViewer();
-        tabbedPane.addTab("Source", icon, tab2,
+        tabbedPane.addTab("Files", icon, tab2,
                 "List all files");
-        tabbedPane.setMnemonicAt(1, KeyEvent.VK_S);
+        tabbedPane.setMnemonicAt(3, KeyEvent.VK_F);
 
 
         //Add the tabbed pane to this panel.

@@ -72,6 +72,8 @@ public class EntityTxtReader implements EntityReader{
 			int fieldIndex = 1;
 			while((line=reader.readLine())!=null){
 				String[] splitRes = line.split("\t");
+				if(splitRes.length<8)
+					System.err.println("lack of info: "+line+"<"+fileName+">");
 				if(workEntity==null || !workEntity.entityName.equals(splitRes[0])){
 					if( workEntity!=null )
 						listEntity.add(workEntity);

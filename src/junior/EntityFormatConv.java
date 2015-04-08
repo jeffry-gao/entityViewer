@@ -1,4 +1,4 @@
-package myTools;
+package junior;
 
 import common.EntityReader;
 import common.EntityTxtReader;
