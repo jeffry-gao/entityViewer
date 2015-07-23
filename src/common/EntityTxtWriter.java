@@ -16,6 +16,7 @@ public class EntityTxtWriter implements EntityWriter {
 			int tableCount = listTables.size();
 			for(int i=0;i<tableCount;i++){
 				int colCount = listTables.get(i).listFieldInfo.size();
+				writer.write("[define]"+listTables.get(i).defineFile+"\n");
 				String physicalName = listTables.get(i).entityName;
 				String logicalName = listTables.get(i).entityNameJP;
 				for(int j=0;j<colCount;j++){

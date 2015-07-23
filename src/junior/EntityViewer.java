@@ -52,6 +52,7 @@ import common.FieldInfo;
 import common.HelpDialog;
 import common.MyFocusListener;
 import common.Utility;
+import common.WindowsShell;
 
 @SuppressWarnings("serial")
 public class EntityViewer extends JPanel {
@@ -82,7 +83,7 @@ public class EntityViewer extends JPanel {
     private JPanel panelLeft;
     private JTable tableEntity;
     private JScrollPane scrollPaneTable;
-    private MyTableModel modelEntity;
+    private MyEntityModel modelEntity;
     private JLabel	labelEntityFilter;
     private JTextField textEntityFilter;
 
@@ -91,7 +92,7 @@ public class EntityViewer extends JPanel {
     private JLabel	labelFieldFilter;
     private JTextField textFieldFilter;
     private JTextArea textUserComment;
-    private TableRowSorter<MyTableModel> sorterEntity;
+    private TableRowSorter<MyEntityModel> sorterEntity;
     private TableRowSorter<MyFieldModel> sorterField;
 
     FieldInfo curField = null;
@@ -131,7 +132,7 @@ public class EntityViewer extends JPanel {
             }
         });
 
-        modelEntity = new MyTableModel();
+        modelEntity = new MyEntityModel();
 
         panelLeft = new JPanel();
 
@@ -182,7 +183,7 @@ public class EntityViewer extends JPanel {
         textEntityFilter.setToolTipText("[Default]by table name; [Enter]by field name.");
 //        textEntityFilter.setVisible(false);
 
-        sorterEntity = new TableRowSorter<MyTableModel>(modelEntity);
+        sorterEntity = new TableRowSorter<MyEntityModel>(modelEntity);
         tableEntity = new JTable(modelEntity);
         tableEntity.setRowSorter(sorterEntity);
         tableEntity.setMinimumSize(new Dimension(200,200));
@@ -201,6 +202,44 @@ public class EntityViewer extends JPanel {
 
         tableEntity.getSelectionModel().addListSelectionListener(new tableSelectionListener());
         tableEntity.addKeyListener(new MyKeyListener());
+        tableEntity.addMouseListener(new MouseListener() {
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {
+			}
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount()==2 ) {
+			        int viewCol = tableEntity.getSelectedColumn();
+			        MyEntityModel model = (MyEntityModel)tableEntity.getModel();
+			        if(viewCol==model.COL_NAME){
+			            int viewRow = tableEntity.getSelectedRow();
+			            int modelRow = 0;
+			            if (viewRow < 0) {
+			            } else {
+			                modelRow = tableEntity.convertRowIndexToModel(viewRow);
+			            }
+			            String entityName = (String)modelEntity.m_curEntities.get(modelRow).defineFile;
+
+			            WindowsShell.open(entityName);
+			        }
+				}
+			}
+		});
+
 		//Create the scroll pane and add the table to it.
         tableEntity.getInputMap().put(KeyStroke.getKeyStroke(
                 KeyEvent.VK_TAB, 0),
@@ -342,8 +381,8 @@ public class EntityViewer extends JPanel {
 
         flagDataAvailable=modelEntity.readInData();
         if(flagDataAvailable){
-        	sorterEntity.toggleSortOrder(MyTableModel.COL_PIN);
-        	sorterEntity.toggleSortOrder(MyTableModel.COL_PIN);
+        	sorterEntity.toggleSortOrder(MyEntityModel.COL_PIN);
+        	sorterEntity.toggleSortOrder(MyEntityModel.COL_PIN);
         }
 
     }
@@ -394,7 +433,7 @@ public class EntityViewer extends JPanel {
      * the text box.
      */
     private void newTableFilter() {
-        RowFilter<MyTableModel, Object> rf = null;
+        RowFilter<MyEntityModel, Object> rf = null;
         //If current expression doesn't parse, don't update.
         try {
         	if(modelEntity.getEntityList()==null||modelEntity.getEntityList().isEmpty())
@@ -402,10 +441,10 @@ public class EntityViewer extends JPanel {
         	modelEntity.resetEntryList();
         	String filter_text = textEntityFilter.getText().toUpperCase();
         	if(filter_text.length()>0){
-        		int index=MyTableModel.COL_DESC;
+        		int index=MyEntityModel.COL_DESC;
         		char first_char = filter_text.charAt(0);
         		if('A'<=first_char && first_char<='Z'||first_char=='_'){
-        			index=MyTableModel.COL_NAME;
+        			index=MyEntityModel.COL_NAME;
         		}
         		rf = RowFilter.regexFilter(filter_text, index);
         		m_filtered_by_field = false;
@@ -557,7 +596,7 @@ public class EntityViewer extends JPanel {
 	            int viewRow = objTable.getSelectedRow();
 	            if (viewRow != -1) {
 	                int modelRow = objTable.convertRowIndexToModel(viewRow);
-	                String phyName = (String)objTable.getModel().getValueAt(modelRow, MyTableModel.COL_NAME);
+	                String phyName = (String)objTable.getModel().getValueAt(modelRow, MyEntityModel.COL_NAME);
 	                setNewTableInField(phyName);//TODO
 	            } else {
 	            	modelField.setFields(null);
@@ -626,7 +665,7 @@ public class EntityViewer extends JPanel {
 					int viewRow = objTable.getSelectedRow();
 					if (viewRow != -1) {
 		                int modelRow = objTable.convertRowIndexToModel(viewRow);
-		                String phyName = (String)objTable.getModel().getValueAt(modelRow, MyTableModel.COL_NAME);//TODO
+		                String phyName = (String)objTable.getModel().getValueAt(modelRow, MyEntityModel.COL_NAME);//TODO
 
 		                EntityInfo selectedTable = modelEntity.getEntityInfo(phyName);
 						Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -657,7 +696,7 @@ public class EntityViewer extends JPanel {
 
     }
 
-    class MyTableModel extends AbstractTableModel {
+    class MyEntityModel extends AbstractTableModel {
         private String[] columnNames = {"entity name",
                                         "desc(editable)",
         								"pin"
@@ -674,7 +713,7 @@ public class EntityViewer extends JPanel {
         public final static int COL_DESC = 1;
         public final static int COL_PIN = 2;
 
-        public MyTableModel(){
+        public MyEntityModel(){
         	m_allEntities = null;
         	m_curEntities = new ArrayList<EntityInfo>();
         }
@@ -869,7 +908,7 @@ public class EntityViewer extends JPanel {
 //			}
 
 			modelEntity.fireTableDataChanged();
-	        RowFilter<MyTableModel, Object> rf = null;
+	        RowFilter<MyEntityModel, Object> rf = null;
 	        //If current expression doesn't parse, don't update.
 	        try {
 	        	rf = RowFilter.regexFilter("", 0);

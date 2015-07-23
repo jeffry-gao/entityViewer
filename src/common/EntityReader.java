@@ -7,6 +7,7 @@ public interface EntityReader {
 	public void read(String fileName, String commentFile);
 	public void read(String fileName);
 	public void setKeyword(String prefix);
+	public void setExclusiveKeyword(String exclusiveWord);
 	public List<EntityInfo> getEntityList();
 	public Map<String, String> getCommentMap();
 }

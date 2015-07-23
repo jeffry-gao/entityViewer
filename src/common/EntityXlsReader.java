@@ -20,12 +20,13 @@ public class EntityXlsReader implements EntityReader{
 	private List<EntityInfo> listEntity;
 	private Map<String, String> mapComment;
 	private String keyword = null;
+	private String exclusiveWord = null;
 
 	private int rowEntityNameJP = 2;
 	private int colEntityNameJP = 'H'-'A';
 
 	private int rowEntityNamePh = 2;
-	private int colEntityNamePh = 'H'-'A';
+	private int colEntityNamePh = 'C'-'A';
 
 	private int rowRowStart = 6;
 	private int colFieldNameJP = 'C' - 'A';
@@ -34,6 +35,7 @@ public class EntityXlsReader implements EntityReader{
 	private int colLenTotal = 'F' - 'A';
 	private int colLenDecimal = 'G' - 'A';
 	private int colRemark = 'M' - 'A';
+	private int colPKFlag = 'J' - 'A';
 
 	private String sheetName = "テーブル定義書";
 
@@ -73,6 +75,8 @@ public class EntityXlsReader implements EntityReader{
 		for (int i = 0; i < sfs.length; i++) {
 			if(keyword!=null&&!sfs[i].contains(keyword))
 				continue;
+			if(exclusiveWord!=null&&sfs[i].contains(exclusiveWord))
+				continue;
 			if (sfs[i].endsWith(".xls")||sfs[i].endsWith(".xlsx")) {
 				String entityDefineXls = dirPath + "/" + sfs[i];
 				System.out.println("<"+(i+1)+">reading from "+entityDefineXls);
@@ -97,6 +101,8 @@ public class EntityXlsReader implements EntityReader{
 
 		try {
 			is = new FileInputStream(path);
+
+			entity.defineFile = path;
 
 			if(path.endsWith("xls"))
 				inBook = new HSSFWorkbook(is);
@@ -197,6 +203,13 @@ public class EntityXlsReader implements EntityReader{
 					}
 				}
 
+				cell = row.getCell(colPKFlag);
+				if(cell!=null&&cell.getCellType()==Cell.CELL_TYPE_STRING){
+					if(cell.getStringCellValue().equals("○")){
+						curField.pkInfo = "○";
+					}
+				}
+
 				cell = row.getCell(colRemark);  //
 				if(cell!=null){
 					field = cell.getStringCellValue();
@@ -234,6 +247,11 @@ public class EntityXlsReader implements EntityReader{
 	@Override
 	public void read(String fileName, String appltFile) {
 
+	}
+
+	@Override
+	public void setExclusiveKeyword(String exclusiveWord) {
+		this.exclusiveWord = exclusiveWord;
 	}
 
 }

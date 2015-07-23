@@ -15,12 +15,21 @@ public class EntityFormatConv {
 	final static int FMT_XLS = 0;
 	final static int FMT_TXT = 1;
 	final static int FMT_XML = 2;
+//	final static String srcPath = "C:/temp/table";
+	final static String srcPath="Y:/0_全フェーズ/B_アプリ系グループ/6_データ管理チーム/90_変更管理/10_ERStudio/10_受渡/10_設計書/040_テーブル定義書";
+//	final static String srcPath="Y:/0_全フェーズ/B_アプリ系グループ/6_データ管理チーム/90_変更管理/10_ERStudio/20_公開/10_設計書/040_テーブル定義書/20150629";
+	final static String destPath="Y:/2_要件定義後半/B_アプリ系グループ/4_共通・移行チーム/1_共通業務・業績管理/99_個人フォルダ/300_椿原/個人/高/entityViewer";
+	final static String destFile=destPath+"/entity.txt";
 
 	public static void main(String[] args) {
 
+
 		EntityFormatConv c = new EntityFormatConv();
 //		c.convert(FMT_TXT, FMT_XML, "entity.txt", "entity.xml");
-		c.convert(FMT_XLS, FMT_TXT, "Y:/3_外部設計/B_アプリ系グループ/6_データ管理チーム/00_全体/90_情報集約/【最新版】1.データ設計/090_テーブル定義書", "C:/gao/temp/entity/entity.txt");
+		c.convert(FMT_XLS, FMT_TXT, srcPath, destFile);
+
+
+//		c.convert(FMT_XLS, FMT_TXT, "C:/gao/temp/entity", "C:/gao/temp/entity.txt");
 	}
 
 	public void convert(int formatFrom, int formatTo, String inFile, String outFile){
@@ -53,6 +62,7 @@ public class EntityFormatConv {
 
 		System.out.println("reading...");
 		reader.setKeyword("_テーブル定義書_");
+		reader.setExclusiveKeyword("~$");
 		reader.read(inFile);
 		System.out.println("writing...");
 		writer.write(reader.getEntityList(),outFile);

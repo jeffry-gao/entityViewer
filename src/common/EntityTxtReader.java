@@ -71,17 +71,21 @@ public class EntityTxtReader implements EntityReader{
 			EntityInfo workEntity=null;
 			int fieldIndex = 1;
 			while((line=reader.readLine())!=null){
+				if(line.startsWith("[define]")){
+					workEntity = new EntityInfo();
+					listEntity.add(workEntity);
+					String[] splitRes = line.split("]");
+					workEntity.defineFile=splitRes[1];
+					fieldIndex = 0;
+					continue;
+				}
 				String[] splitRes = line.split("\t");
 				if(splitRes.length<8)
 					System.err.println("lack of info: "+line+"<"+fileName+">");
-				if(workEntity==null || !workEntity.entityName.equals(splitRes[0])){
-					if( workEntity!=null )
-						listEntity.add(workEntity);
-					workEntity = new EntityInfo();
-					workEntity.entityName = splitRes[0];
-					workEntity.entityNameJP = splitRes[1];
-					fieldIndex = 1;
-				}
+
+
+				workEntity.entityName = splitRes[0];
+				workEntity.entityNameJP = splitRes[1];
 				FieldInfo workField = new FieldInfo();
 				workField.seqNo = fieldIndex++;
 				workField.fieldName = splitRes[2];
@@ -177,5 +181,11 @@ public class EntityTxtReader implements EntityReader{
 	@Override
 	public void setKeyword(String prefix) {
 		//
+	}
+
+	@Override
+	public void setExclusiveKeyword(String exclusiveWord) {
+		// TODO 自動生成されたメソッド・スタブ
+
 	}
 }

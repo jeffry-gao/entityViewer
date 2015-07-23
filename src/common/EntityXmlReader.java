@@ -255,4 +255,10 @@ public class EntityXmlReader implements EntityReader{
 		//
 
 	}
+
+	@Override
+	public void setExclusiveKeyword(String exclusiveWord) {
+		// TODO 自動生成されたメソッド・スタブ
+
+	}
 }
